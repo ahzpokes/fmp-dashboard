@@ -3,8 +3,8 @@ name: Update Data
 on:
   workflow_dispatch:
   schedule:
-    # Tous les jours à 6h UTC
-    - cron: '0 6 * * *'
+    # Tous les jours à 8h30 UTC
+    - cron: '30 8 * * *'
 
 jobs:
   update:
