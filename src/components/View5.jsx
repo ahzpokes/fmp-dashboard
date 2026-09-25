@@ -1,12 +1,12 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  ComposedChart, Line, Cell
+  ComposedChart, Line
 } from 'recharts';
 import { getLastCompleteWeek } from '../utils/dataHelpers';
 import { FRENCH_ACC } from '../utils/theme';
 
-// Palette stable pour identifier chaque CRNA
+// Palette stable pour identifier chaque CRNA (partagée entre les 2 graphiques)
 const CRNA_COLORS = {
   'BREST': '#00b4d8',
   'BORDEAUX': '#f59e0b',
@@ -15,15 +15,15 @@ const CRNA_COLORS = {
   'PARIS': '#ef4444',
 };
 
-const COLOR_BETTER = '#10b981';
-const COLOR_WORSE = '#ef4444';
+// Couleurs neutres pour la comparaison N / N-1
+const COLOR_N = '#3b82f6';      // bleu vif : année en cours
+const COLOR_N1 = '#93c5fd';     // bleu clair : année précédente
 
 const formatNumber = (value) => {
   if (value === undefined || value === null) return '';
   return value.toLocaleString('fr-FR');
 };
 
-// Affichage compact : 1.2M, 850K, etc.
 const formatCompact = (value) => {
   if (value === undefined || value === null) return '';
   if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
@@ -31,7 +31,24 @@ const formatCompact = (value) => {
   return value.toString();
 };
 
-// ─── Tooltip barres (délai moyen) ───
+// ─── Tick personnalisé pour l'axe X (libellés colorés par CRNA) ───
+const ColoredCrnaTick = ({ x, y, payload }) => {
+  const color = CRNA_COLORS[payload.value] || 'var(--text-muted)';
+  return (
+    <text
+      x={x}
+      y={y + 14}
+      textAnchor="middle"
+      fill={color}
+      fontSize={12}
+      fontWeight={700}
+    >
+      {payload.value}
+    </text>
+  );
+};
+
+// ─── Tooltip du graphique délai moyen ───
 const DelayBarTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
   const currentYear = new Date().getFullYear();
@@ -44,7 +61,7 @@ const DelayBarTooltip = ({ active, payload, label }) => {
   const valN1 = valueMap[`delayAvg_${previousYear}`] ?? 0;
   const gap = valN1 > 0 ? ((valN - valN1) / valN1) * 100 : 0;
   const isBetter = gap <= 0;
-  const gapColor = isBetter ? COLOR_BETTER : COLOR_WORSE;
+  const gapColor = isBetter ? '#10b981' : '#ef4444';
 
   return (
     <div style={{
@@ -53,7 +70,11 @@ const DelayBarTooltip = ({ active, payload, label }) => {
       borderRadius: 6, padding: '10px 14px', fontSize: 12,
       color: 'var(--text-primary)', minWidth: 220,
     }}>
-      <div style={{ fontWeight: 'bold', borderBottom: '1px solid var(--border-color)', paddingBottom: 4, marginBottom: 6 }}>
+      <div style={{
+        fontWeight: 'bold', borderBottom: '1px solid var(--border-color)',
+        paddingBottom: 4, marginBottom: 6,
+        color: CRNA_COLORS[label] || 'var(--text-primary)',
+      }}>
         {label}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px' }}>
@@ -75,7 +96,7 @@ const DelayBarTooltip = ({ active, payload, label }) => {
   );
 };
 
-// ─── Tooltip courbes (vols) ───
+// ─── Tooltip du graphique vols ───
 const FlightsTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
   const sorted = [...payload].sort((a, b) => (b.value || 0) - (a.value || 0));
@@ -114,7 +135,7 @@ const View5 = ({ data, isActive }) => {
     }
   }, [isActive]);
 
-  // ─── ÉTAPE 1 : dernière semaine commune ───
+  // ─── Dernière semaine commune ───
   const lastWeekWithData = useMemo(() => {
     let minComplete = 53;
     FRENCH_ACC.forEach(acc => {
@@ -126,14 +147,13 @@ const View5 = ({ data, isActive }) => {
     return minComplete || 1;
   }, [data]);
 
-  // ─── ÉTAPE 2 : calcul des stats par CRNA (délai moyen + vols) ───
+  // ─── Stats par CRNA (délai moyen + vols) ───
   const crnaStats = useMemo(() => {
     return FRENCH_ACC.map(acc => {
       const accData = data[acc];
       if (!accData?.annual) return null;
       const annual = accData.annual;
 
-      // Délai cumulé (tronqué à lastWeekWithData)
       const totalDelayN = (annual.delays?.total || [])
         .slice(0, lastWeekWithData)
         .reduce((a, b) => a + (b || 0), 0);
@@ -142,7 +162,6 @@ const View5 = ({ data, isActive }) => {
         .slice(0, lastWeekWithData)
         .reduce((a, b) => a + (b || 0), 0);
 
-      // Vols cumulés (tronqués)
       const flightsArr = annual.flights || [];
       const flightsPrevArr = annual.flightsPreviousYear || [];
 
@@ -154,7 +173,6 @@ const View5 = ({ data, isActive }) => {
         .slice(0, lastWeekWithData)
         .reduce((sum, val) => sum + Math.round(val || 0), 0);
 
-      // Délai MOYEN par vol (min/vol)
       const delayAvgN = cumulVolsN > 0 ? totalDelayN / cumulVolsN : 0;
       const delayAvgN1 = cumulVolsN1 > 0 ? totalDelayN1 / cumulVolsN1 : 0;
 
@@ -184,18 +202,15 @@ const View5 = ({ data, isActive }) => {
     }).filter(Boolean);
   }, [data, lastWeekWithData]);
 
-  // ─── ÉTAPE 3 : données du graphique délai moyen (barres) ───
+  // ─── Données graphique délai moyen ───
   const delayChartData = useMemo(() => {
     return crnaStats.map(stat => ({
       name: stat.name,
       [`delayAvg_${currentYear}`]: Number(stat.delayAvgN.toFixed(2)),
       [`delayAvg_${previousYear}`]: Number(stat.delayAvgN1.toFixed(2)),
-      gapPct: stat.gapDelayAvgPct,
-      color: stat.color,
     }));
   }, [crnaStats, currentYear, previousYear]);
 
-  // Y-max du graphique délai moyen
   const delayYMax = useMemo(() => {
     const max = Math.max(
       ...delayChartData.map(d => Math.max(
@@ -206,7 +221,7 @@ const View5 = ({ data, isActive }) => {
     return Math.ceil(max * 1.15 * 10) / 10 || 1;
   }, [delayChartData, currentYear, previousYear]);
 
-  // ─── ÉTAPE 4 : données du graphique vols (courbes) ───
+  // ─── Données graphique vols ───
   const flightsChartData = useMemo(() => {
     const points = [];
     for (let w = 1; w <= lastWeekWithData; w++) {
@@ -219,7 +234,6 @@ const View5 = ({ data, isActive }) => {
     return points;
   }, [crnaStats, lastWeekWithData]);
 
-  // Bornes Y vols (auto-scale)
   const { yMin, yMax, yTicks } = useMemo(() => {
     let max = 1, min = Infinity;
     crnaStats.forEach(stat => {
@@ -245,7 +259,7 @@ const View5 = ({ data, isActive }) => {
     return { yMin: yMinV, yMax: yMaxV, yTicks: ticks };
   }, [crnaStats, lastWeekWithData]);
 
-  // ─── ÉTAPE 5 : classement par délai moyen (le plus faible = le meilleur) ───
+  // ─── Classement par délai moyen ───
   const rankedKPIs = useMemo(() => {
     const ranked = [...crnaStats].sort((a, b) => a.delayAvgN - b.delayAvgN);
     return ranked.map((stat, idx) => ({ ...stat, rank: idx + 1 }));
@@ -253,39 +267,33 @@ const View5 = ({ data, isActive }) => {
 
   return (
     <div className="space-y-6">
-      {/* ─── Graphique 1 : Délai Moyen par CRNA ─── */}
+      {/* ─── Graphique 1 : Délai Moyen par Vol ─── */}
       <div className="theme-card p-5 rounded-lg">
-        <div className="flex justify-between items-start mb-4 flex-wrap gap-2">
-          <div>
-            <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-              Délai Moyen par Vol — Comparaison par CRNA
-            </h3>
-            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-              {currentYear} vs {previousYear} — Délai moyen = délai cumulé / nombre de vols
-            </p>
-          </div>
-          <div className="flex gap-3 text-xs theme-text-secondary">
-            <span className="flex items-center gap-1">
-              <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: COLOR_BETTER }} />
-              Amélioration
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: COLOR_WORSE }} />
-              Dégradation
-            </span>
-          </div>
+        <div className="mb-4">
+          <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Délai Moyen par Vol — Comparaison par CRNA
+          </h3>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+            {currentYear} vs {previousYear} — Délai moyen = délai cumulé / nombre de vols.
+            Les libellés reprennent les couleurs du graphique d'évolution ci-dessous.
+          </p>
         </div>
 
         <div style={{ width: '100%', height: 340 }}>
           <ResponsiveContainer>
-            <ComposedChart
+            <BarChart
               data={delayChartData}
               barCategoryGap="25%"
               barGap={4}
-              margin={{ top: 30, right: 20, left: 20, bottom: 10 }}
+              margin={{ top: 20, right: 20, left: 20, bottom: 20 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" vertical={false} />
-              <XAxis dataKey="name" stroke="var(--text-muted)" tick={{ fontSize: 12, fontWeight: 600 }} />
+              <XAxis
+                dataKey="name"
+                tick={<ColoredCrnaTick />}
+                interval={0}
+                height={50}
+              />
               <YAxis
                 stroke="var(--text-muted)"
                 domain={[0, delayYMax]}
@@ -301,29 +309,34 @@ const View5 = ({ data, isActive }) => {
                 }}
               />
               <Tooltip content={<DelayBarTooltip />} cursor={{ fill: 'var(--bg-hover)' }} />
-              <Legend content={() => (
-                <div className="flex justify-center gap-4 text-xs py-2" style={{ color: 'var(--text-secondary)' }}>
-                  <span className="flex items-center gap-1.5">
-                    <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: '#3b82f6' }} />
-                    Délai moyen {currentYear}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: '#93c5fd' }} />
-                    Délai moyen {previousYear}
-                  </span>
-                </div>
-              )} />
-
-              <Bar dataKey={`delayAvg_${previousYear}`} fill="#93c5fd" barSize={40} radius={[3, 3, 0, 0]} />
-              <Bar dataKey={`delayAvg_${currentYear}`} barSize={40} radius={[3, 3, 0, 0]}>
-                {delayChartData.map((entry, idx) => (
-                  <Cell
-                    key={`cell-${idx}`}
-                    fill={entry.gapPct <= 0 ? COLOR_BETTER : COLOR_WORSE}
-                  />
-                ))}
-              </Bar>
-            </ComposedChart>
+              <Legend
+                content={() => (
+                  <div className="flex justify-center gap-4 text-xs py-2"
+                    style={{ color: 'var(--text-secondary)' }}>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: COLOR_N1 }} />
+                      Délai moyen {previousYear}
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="inline-block w-3 h-3 rounded-sm" style={{ backgroundColor: COLOR_N }} />
+                      Délai moyen {currentYear}
+                    </span>
+                  </div>
+                )}
+              />
+              <Bar
+                dataKey={`delayAvg_${previousYear}`}
+                fill={COLOR_N1}
+                barSize={40}
+                radius={[3, 3, 0, 0]}
+              />
+              <Bar
+                dataKey={`delayAvg_${currentYear}`}
+                fill={COLOR_N}
+                barSize={40}
+                radius={[3, 3, 0, 0]}
+              />
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
@@ -396,14 +409,14 @@ const View5 = ({ data, isActive }) => {
         </div>
       </div>
 
-      {/* ─── Tableau récapitulatif classé par DÉLAI MOYEN ─── */}
+      {/* ─── Tableau récapitulatif ─── */}
       <div className="theme-card p-5 rounded-lg">
         <div className="flex justify-between items-baseline mb-4 flex-wrap gap-2">
           <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
             Classement des CRNA par Délai Moyen
           </h3>
           <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            Cumul jusqu'à la semaine {lastWeekWithData} — classement par délai moyen {currentYear} (le plus faible en premier)
+            Cumul jusqu'à la semaine {lastWeekWithData} — classement par délai moyen {currentYear}
           </span>
         </div>
 
@@ -431,8 +444,8 @@ const View5 = ({ data, isActive }) => {
               {rankedKPIs.map((stat) => {
                 const isDelayBetter = stat.gapDelayAvgPct <= 0;
                 const isVolsBetter = stat.evolVolsPct >= 0;
-                const delayColor = isDelayBetter ? COLOR_BETTER : COLOR_WORSE;
-                const volsColor = isVolsBetter ? COLOR_BETTER : COLOR_WORSE;
+                const delayColor = isDelayBetter ? '#10b981' : '#ef4444';
+                const volsColor = isVolsBetter ? '#10b981' : '#ef4444';
                 const isFirst = stat.rank === 1;
 
                 return (
@@ -445,7 +458,7 @@ const View5 = ({ data, isActive }) => {
                       <span className="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold"
                         style={{
                           backgroundColor: isFirst ? 'rgba(16,185,129,0.2)' : 'var(--bg-card-alt)',
-                          color: isFirst ? COLOR_BETTER : 'var(--text-secondary)',
+                          color: isFirst ? '#10b981' : 'var(--text-secondary)',
                         }}>
                         {stat.rank}
                       </span>

@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { getAnnualSeries, getLastCompleteWeek } from '../utils/dataHelpers';
 import { CAUSE_COLORS } from '../utils/theme';
 import { CausesOnlyLegend } from './ChartLegends';
+import PeriodToggle from './PeriodToggle';
 
 const formatNumber = (value) => {
   if (value === undefined || value === null) return '';
@@ -73,51 +74,94 @@ const View3 = ({ data, isActive }) => {
     delaysByCause: { capacityStaffing, weather, other, disruption }
   } = getAnnualSeries(data);
 
+  const lastWeekWithData = getLastCompleteWeek(data);
+
+  const [period, setPeriod] = useState('12w');
+
   useEffect(() => {
     if (isActive) {
       const timer = setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
       return () => clearTimeout(timer);
     }
-  }, [isActive]);
+  }, [isActive, period]);
 
-  const lastWeekWithData = getLastCompleteWeek(data);
+  // Calcul de la plage de semaines selon la période sélectionnée
+  const { startWeek, endWeek, periodLabel } = useMemo(() => {
+    if (period === '4w') {
+      return {
+        startWeek: Math.max(1, lastWeekWithData - 3),
+        endWeek: lastWeekWithData,
+        periodLabel: '4 dernières semaines',
+      };
+    }
+    if (period === '12w') {
+      return {
+        startWeek: Math.max(1, lastWeekWithData - 11),
+        endWeek: lastWeekWithData,
+        periodLabel: '12 dernières semaines',
+      };
+    }
+    return {
+      startWeek: 1,
+      endWeek: lastWeekWithData,
+      periodLabel: 'année complète',
+    };
+  }, [period, lastWeekWithData]);
 
-  const chartData = weeks
-    .map((w, idx) => ({
-      week: w,
-      'Capacity/Staffing': capacityStaffing[idx] || 0,
-      'Weather': weather[idx] || 0,
-      'Other': other[idx] || 0,
-      'Disruption': disruption[idx] || 0,
-      'Vols': flights[idx] || 0,
-    }))
-    .filter(d => d.week <= lastWeekWithData);
+  const chartData = useMemo(() => {
+    return weeks
+      .map((w, idx) => ({
+        week: w,
+        'Capacity/Staffing': capacityStaffing[idx] || 0,
+        'Weather': weather[idx] || 0,
+        'Other': other[idx] || 0,
+        'Disruption': disruption[idx] || 0,
+        'Vols': flights[idx] || 0,
+      }))
+      .filter(d => d.week >= startWeek && d.week <= endWeek);
+  }, [weeks, capacityStaffing, weather, other, disruption, flights, startWeek, endWeek]);
 
+  // Max calculés sur la plage sélectionnée uniquement
   const maxDelay = Math.max(
     1,
-    ...capacityStaffing.slice(0, lastWeekWithData).map((v, i) => v + (weather[i] || 0) + (other[i] || 0) + (disruption[i] || 0))
+    ...capacityStaffing.slice(startWeek - 1, endWeek).map((v, i) => {
+      const idx = startWeek - 1 + i;
+      return v + (weather[idx] || 0) + (other[idx] || 0) + (disruption[idx] || 0);
+    })
   );
-  const maxFlights = Math.max(1, ...flights.slice(0, lastWeekWithData));
+  const maxFlights = Math.max(1, ...flights.slice(startWeek - 1, endWeek));
 
   const yLeftMax = Math.ceil(maxDelay / 500) * 500 || 500;
   const yLeftTicks = Array.from({ length: yLeftMax / 500 + 1 }, (_, i) => i * 500);
   const yRightMax = Math.ceil(maxFlights / 5000) * 5000 || 5000;
   const yRightTicks = Array.from({ length: yRightMax / 5000 + 1 }, (_, i) => i * 5000);
 
+  // Interval pour les ticks X : tous les points si peu de semaines, sinon espacé
+  const tickInterval = chartData.length <= 14 ? 0 : Math.floor(chartData.length / 12);
+
   return (
     <div className="theme-card p-5 rounded-lg">
-      <h3 className="text-base font-semibold mb-3 text-center" style={{ color: 'var(--text-primary)' }}>
-        Analyse des Causes de Retard {new Date().getFullYear()} (Hebdomadaire)
-      </h3>
+      <div className="flex justify-between items-start mb-4 flex-wrap gap-3">
+        <div>
+          <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+            Analyse des Causes de Retard {new Date().getFullYear()}
+          </h3>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+            {periodLabel}
+          </p>
+        </div>
+        <PeriodToggle value={period} onChange={setPeriod} />
+      </div>
       <div style={{ width: '100%', height: 420 }}>
         <ResponsiveContainer>
           <ComposedChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
             <XAxis
-              dataKey="week" stroke="var(--text-muted)" type="category"
-              domain={[1, lastWeekWithData]}
-              ticks={Array.from({ length: lastWeekWithData }, (_, i) => i + 1)}
-              interval={0} tick={{ fontSize: 11 }}
+              dataKey="week"
+              stroke="var(--text-muted)"
+              type="category"
+              interval={tickInterval}
+              tick={{ fontSize: 11 }}
             />
             <YAxis yAxisId="left" stroke="var(--text-muted)" domain={[0, yLeftMax]} ticks={yLeftTicks} />
             <YAxis yAxisId="right" orientation="right" stroke="var(--text-muted)" domain={[0, yRightMax]} ticks={yRightTicks} />

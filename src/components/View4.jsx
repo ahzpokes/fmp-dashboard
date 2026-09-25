@@ -258,25 +258,30 @@ const View4 = ({ data, isActive }) => {
             <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
               Trafic & Délai par Causes - Jours
             </h3>
+            {/* Toggle avec style "Option B" : fond neutre + texte orange pour l'actif */}
             <div className="flex rounded-lg p-1 text-xs"
               style={{ backgroundColor: 'var(--bg-page)', border: '1px solid var(--border-color)' }}>
               {[
                 { id: 'combined', label: 'Combiné' },
                 { id: 'delays', label: 'Délais' },
                 { id: 'traffic', label: 'Trafic' },
-              ].map(opt => (
-                <button
-                  key={opt.id}
-                  onClick={() => setDisplay(opt.id)}
-                  className="px-3 py-1 rounded-md font-semibold transition-colors"
-                  style={{
-                    backgroundColor: display === opt.id ? 'var(--accent-amber)' : 'transparent',
-                    color: display === opt.id ? '#000' : 'var(--text-secondary)',
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
+              ].map(opt => {
+                const isActive = display === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => setDisplay(opt.id)}
+                    className="px-3 py-1 rounded-md font-semibold transition-all"
+                    style={{
+                      backgroundColor: 'transparent',
+                      color: isActive ? 'var(--accent-amber)' : 'var(--text-secondary)',
+                      border: isActive ? '1px solid var(--accent-amber)' : '1px solid transparent',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
           <div style={{ width: '100%', height: 340 }}>
