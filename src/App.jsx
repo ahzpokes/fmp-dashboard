@@ -16,12 +16,11 @@ import { DATA_URL } from './config';
 function App() {
   const [data, setData] = useState(null);
   const [dataError, setDataError] = useState(null);
-  const [dataSource, setDataSource] = useState('loading'); // 'remote' | 'local' | 'loading'
+  const [dataSource, setDataSource] = useState('loading');
 
-  // ─── Chargement des données depuis jsDelivr avec fallback local ───
+  // Charge les données depuis jsDelivr avec fallback local
   useEffect(() => {
     let cancelled = false;
-
     const loadData = async () => {
       try {
         const res = await fetch(DATA_URL);
@@ -32,7 +31,7 @@ function App() {
           setDataSource('remote');
         }
       } catch (err) {
-        console.warn('Échec du chargement distant, fallback local :', err.message);
+        console.warn('Fallback local :', err.message);
         if (!cancelled) {
           setData(localData);
           setDataError(err.message);
@@ -40,26 +39,28 @@ function App() {
         }
       }
     };
-
     loadData();
     return () => { cancelled = true; };
   }, []);
 
-  // ─── Routage par pathname (/reims, /brest, ...) avec fallback query ───
+  // Routage par pathname + fallback query
   const [selectedAcc, setSelectedAcc] = useState(() => {
     const path = window.location.pathname.replace(/^\/|\/$/g, '');
     const fromPath = slugToAcc(path);
     if (fromPath) return fromPath;
-
-    // Compat avec l'ancien ?acc=REIMS+ACC
     const params = new URLSearchParams(window.location.search);
     const fromQuery = params.get('acc');
     if (fromQuery && localData[fromQuery]) return fromQuery;
-
     return 'REIMS ACC';
   });
 
-  // Synchronisation URL ↔ ACC sélectionné
+  // Thème light par défaut
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('dashboard-theme') || 'light';
+  });
+
+  // ⚠️ CORRECTION : Tous les hooks sont appelés AVANT les returns conditionnels.
+
   useEffect(() => {
     const slug = accToSlug(selectedAcc);
     const targetPath = `/${slug}`;
@@ -67,11 +68,6 @@ function App() {
       window.history.replaceState({}, '', targetPath);
     }
   }, [selectedAcc]);
-
-  // ─── Thème : light par défaut ───
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('dashboard-theme') || 'light';
-  });
 
   useEffect(() => {
     localStorage.setItem('dashboard-theme', theme);
@@ -86,21 +82,11 @@ function App() {
 
   const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));
 
-  // ─── État de chargement ───
-  if (!data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-pulse text-lg">Chargement des données…</div>
-        </div>
-      </div>
-    );
-  }
-
-  const accData = data[selectedAcc];
+  // Ces useMemo doivent être appelés avant tout return conditionnel.
+  const accData = data ? data[selectedAcc] : null;
 
   const lastUpdate = useMemo(() => {
-    if (data.generated_at) return new Date(data.generated_at);
+    if (data?.generated_at) return new Date(data.generated_at);
     return new Date();
   }, [data]);
 
@@ -113,18 +99,25 @@ function App() {
         const date = new Date(d);
         return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
       };
-      const start = formatDate(weekData.dates[0]);
-      const end = formatDate(weekData.dates[6]);
-      return `Semaine ${weekNum} (${start} - ${end})`;
+      return `Semaine ${weekNum} (${formatDate(weekData.dates[0])} - ${formatDate(weekData.dates[6])})`;
     }
     return `Semaine ${weekNum}`;
   }, [accData]);
 
+  // ─── RETURNS CONDITIONNELS (APRÈS TOUS LES HOOKS) ───
+
+  if (!data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Chargement des données…</div>
+      </div>
+    );
+  }
+
   if (!accData) {
     return (
       <div className="p-6 text-center">
-        <p className="mb-2">Données non disponibles pour <strong>{selectedAcc}</strong></p>
-        <p className="text-sm opacity-60">Utilisez le menu pour sélectionner un autre ACC.</p>
+        <p>Données non disponibles pour <strong>{selectedAcc}</strong></p>
       </div>
     );
   }
@@ -145,9 +138,8 @@ function App() {
         />
 
         {dataSource === 'local' && dataError && (
-          <div className="theme-card p-3 rounded-lg mb-4 text-sm"
-            style={{ color: 'var(--accent-amber)' }}>
-            ⚠️ Données distantes indisponibles, utilisation des données locales embarquées. ({dataError})
+          <div className="theme-card p-3 rounded-lg mb-4 text-sm" style={{ color: 'var(--accent-amber)' }}>
+            ⚠️ Données distantes indisponibles, utilisation des données locales. ({dataError})
           </div>
         )}
 
