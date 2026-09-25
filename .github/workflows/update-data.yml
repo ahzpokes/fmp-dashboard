@@ -3,7 +3,7 @@ name: Update Data
 on:
   workflow_dispatch:
   schedule:
-    - cron: '36 9 * * *'
+    - cron: '30 9 * * *'
       timezone: 'Europe/Paris'
 
 jobs:
@@ -20,9 +20,10 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: requirements.txt
 
       - name: Install Python deps
-        run: pip install pandas requests openpyxl
+        run: pip install -r requirements.txt
 
       - name: Fetch Eurocontrol data
         run: python scripts/fetch_data.py
