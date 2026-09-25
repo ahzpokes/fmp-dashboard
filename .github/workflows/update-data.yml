@@ -1,0 +1,45 @@
+name: Update Data
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Tous les jours à 6h UTC
+    - cron: '0 6 * * *'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python deps
+        run: pip install pandas requests openpyxl
+
+      - name: Fetch Eurocontrol data
+        run: python scripts/fetch_data.py
+
+      - name: Push to data branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin data || true
+          git worktree add /tmp/data-branch data 2>/dev/null || git worktree add -b data /tmp/data-branch
+          mkdir -p /tmp/data-branch/data
+          cp src/data/traffic_data.json /tmp/data-branch/data/traffic_data.json
+          cd /tmp/data-branch
+          git add data/traffic_data.json
+          if ! git diff --staged --quiet; then
+            git commit -m "data: update $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            git push origin data
+          else
+            echo "No change in data"
+          fi
