@@ -1,3 +1,4 @@
+cat > .gitignore << 'EOF'
 node_modules/
 dist/
 .venv/
@@ -5,3 +6,7 @@ __pycache__/
 *.pyc
 .env
 .DS_Store
+
+# Ne PAS ignorer : src/data/traffic_data.json (fallback local)
+# Ne PAS ignorer : public/_redirects (SPA fallback)
+EOF

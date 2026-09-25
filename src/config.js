@@ -3,8 +3,8 @@
  * Modifiez ces constantes pour adapter le dashboard à votre dépôt.
  */
 
-export const GITHUB_USER = 'VOTRE_USERNAME';
-export const GITHUB_REPO = 'eurocontrol-dashboard';
+export const GITHUB_USER = 'ahzpokes';
+export const GITHUB_REPO = 'fmp-dashboard';
 export const DATA_BRANCH = 'data';
 export const DATA_PATH = 'data/traffic_data.json';
 
