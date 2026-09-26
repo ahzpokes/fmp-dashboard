@@ -1,10 +1,8 @@
 name: Update Data
 
 on:
+  # Déclenchement manuel via GitHub UI + appel API par cron-job.org
   workflow_dispatch:
-  schedule:
-    - cron: '30 9 * * *'
-      timezone: 'Europe/Paris'
 
 jobs:
   update:
