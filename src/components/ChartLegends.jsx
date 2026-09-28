@@ -30,7 +30,6 @@ const Separator = () => (
 
 /**
  * Légende pour la Vue 1 : 4 causes + trafic N / N-1
- * Utilise des couleurs atténuées pour signaler que N-1 partage la même teinte
  */
 export const CausesAndTrafficLegend = ({ currentYear, previousYear }) => (
   <Container>
@@ -75,13 +74,14 @@ export const CausesOnlyLegend = ({ currentYear }) => (
 );
 
 /**
- * Légende pour la Vue 4 : causes S / S-1 + Vols S / S-1
+ * Légende pour la Vue 4 : 4 causes S / S-1 + Vols S / S-1
  */
 export const WeeklyLegend = ({ selectedWeek }) => (
   <Container>
     <Item color="#3b82f6" label="Capacity" />
     <Item color="#10b981" label="Weather" />
     <Item color="#f59e0b" label="Other" />
+    <Item color="#ef4444" label="Disruption" />
     <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
       (atténué = S{selectedWeek - 1})
     </span>

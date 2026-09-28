@@ -30,7 +30,7 @@ const CustomChartTooltip = ({ active, payload, label }) => {
   const valueMap = {};
   payload.forEach(entry => { valueMap[entry.dataKey] = entry.value; });
 
-  const causeKeys = ['Capacity', 'Weather', 'Other'];
+  const causeKeys = ['Capacity', 'Weather', 'Other', 'Disruption'];
 
   const totalS = causeKeys.reduce((sum, k) => sum + (valueMap[`${k} S`] ?? 0), 0);
   const totalS1 = causeKeys.reduce((sum, k) => sum + (valueMap[`${k} S-1`] ?? 0), 0);
@@ -39,6 +39,7 @@ const CustomChartTooltip = ({ active, payload, label }) => {
     { key: 'Capacity', label: 'Capacity', color: CAUSE_COLORS.capacity },
     { key: 'Weather', label: 'Weather', color: CAUSE_COLORS.weather },
     { key: 'Other', label: 'Other', color: CAUSE_COLORS.other },
+    { key: 'Disruption', label: 'Disruption', color: CAUSE_COLORS.disruption },
   ];
 
   return (
@@ -124,6 +125,8 @@ const View4 = ({ data, isActive }) => {
       'Weather S-1': weekPrevData ? (weekPrevData.delays.weather?.[idx] || 0) : null,
       'Other S': hasData ? (weekData.delays.other?.[idx] || 0) : null,
       'Other S-1': weekPrevData ? (weekPrevData.delays.other?.[idx] || 0) : null,
+      'Disruption S': hasData ? (weekData.delays.disruption?.[idx] || 0) : null,
+      'Disruption S-1': weekPrevData ? (weekPrevData.delays.disruption?.[idx] || 0) : null,
       'Vols S': hasData ? (weekData.flights?.[idx] || 0) : null,
       'Vols S-1': weekPrevData ? (weekPrevData.flights?.[idx] || 0) : null,
       datesS, datesS1,
@@ -134,8 +137,12 @@ const View4 = ({ data, isActive }) => {
 
   const maxDelay = Math.max(
     1,
-    ...validData.map(d => (d['Capacity S'] || 0) + (d['Weather S'] || 0) + (d['Other S'] || 0)),
-    ...(weekPrevData ? validData.map(d => (d['Capacity S-1'] || 0) + (d['Weather S-1'] || 0) + (d['Other S-1'] || 0)) : [0])
+    ...validData.map(d =>
+      (d['Capacity S'] || 0) + (d['Weather S'] || 0) + (d['Other S'] || 0) + (d['Disruption S'] || 0)
+    ),
+    ...(weekPrevData ? validData.map(d =>
+      (d['Capacity S-1'] || 0) + (d['Weather S-1'] || 0) + (d['Other S-1'] || 0) + (d['Disruption S-1'] || 0)
+    ) : [0])
   );
 
   const maxFlights = Math.max(
@@ -258,7 +265,6 @@ const View4 = ({ data, isActive }) => {
             <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
               Trafic & Délai par Causes - Jours
             </h3>
-            {/* Toggle avec style "Option B" : fond neutre + texte orange pour l'actif */}
             <div className="flex rounded-lg p-1 text-xs"
               style={{ backgroundColor: 'var(--bg-page)', border: '1px solid var(--border-color)' }}>
               {[
@@ -299,10 +305,12 @@ const View4 = ({ data, isActive }) => {
                     <Bar yAxisId="left" dataKey="Capacity S" stackId="S" fill={CAUSE_COLORS.capacity} />
                     <Bar yAxisId="left" dataKey="Weather S" stackId="S" fill={CAUSE_COLORS.weather} />
                     <Bar yAxisId="left" dataKey="Other S" stackId="S" fill={CAUSE_COLORS.other} />
+                    <Bar yAxisId="left" dataKey="Disruption S" stackId="S" fill={CAUSE_COLORS.disruption} />
 
                     <Bar yAxisId="left" dataKey="Capacity S-1" stackId="S1" fill={CAUSE_COLORS_PREV.capacity} />
                     <Bar yAxisId="left" dataKey="Weather S-1" stackId="S1" fill={CAUSE_COLORS_PREV.weather} />
                     <Bar yAxisId="left" dataKey="Other S-1" stackId="S1" fill={CAUSE_COLORS_PREV.other} />
+                    <Bar yAxisId="left" dataKey="Disruption S-1" stackId="S1" fill={CAUSE_COLORS_PREV.disruption} />
                   </>
                 )}
 
