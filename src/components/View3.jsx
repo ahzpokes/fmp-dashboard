@@ -12,6 +12,13 @@ const formatNumber = (value) => {
   return value.toLocaleString('fr-FR');
 };
 
+const formatCompact = (value) => {
+  if (value === undefined || value === null) return '';
+  if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
+  return value.toString();
+};
+
 const CustomChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
 
@@ -121,7 +128,7 @@ const View3 = ({ data, isActive }) => {
       .filter(d => d.week >= startWeek && d.week <= endWeek);
   }, [weeks, capacityStaffing, weather, other, disruption, flights, startWeek, endWeek]);
 
-  // Max calculés sur la plage sélectionnée uniquement
+  // ─── Axe GAUCHE (délais, barres) : toujours à 0 ───
   const maxDelay = Math.max(
     1,
     ...capacityStaffing.slice(startWeek - 1, endWeek).map((v, i) => {
@@ -129,14 +136,45 @@ const View3 = ({ data, isActive }) => {
       return v + (weather[idx] || 0) + (other[idx] || 0) + (disruption[idx] || 0);
     })
   );
-  const maxFlights = Math.max(1, ...flights.slice(startWeek - 1, endWeek));
-
   const yLeftMax = Math.ceil(maxDelay / 500) * 500 || 500;
   const yLeftTicks = Array.from({ length: yLeftMax / 500 + 1 }, (_, i) => i * 500);
-  const yRightMax = Math.ceil(maxFlights / 5000) * 5000 || 5000;
-  const yRightTicks = Array.from({ length: yRightMax / 5000 + 1 }, (_, i) => i * 5000);
 
-  // Interval pour les ticks X : tous les points si peu de semaines, sinon espacé
+  // ─── Axe DROIT (vols, ligne) : auto-scale ───
+  const { yRightMin, yRightMax, yRightTicks } = useMemo(() => {
+    const flightsPeriod = flights.slice(startWeek - 1, endWeek).filter(v => v > 0);
+
+    if (flightsPeriod.length === 0) {
+      return { yRightMin: 0, yRightMax: 1000, yRightTicks: [0, 500, 1000] };
+    }
+
+    const min = Math.min(...flightsPeriod);
+    const max = Math.max(...flightsPeriod);
+
+    // Padding de 10% en dessous du minimum, 5% au-dessus du maximum
+    const paddingBottom = Math.max(100, min * 0.10);
+    const paddingTop = Math.max(100, max * 0.05);
+
+    const rawMin = Math.max(0, min - paddingBottom);
+    const rawMax = max + paddingTop;
+
+    // Arrondi à la centaine
+    const yMin = Math.floor(rawMin / 100) * 100;
+    const yMax = Math.ceil(rawMax / 100) * 100;
+
+    // Génération des ticks avec un pas adapté
+    const range = yMax - yMin;
+    let step = 100;
+    if (range > 2000) step = 500;
+    if (range > 5000) step = 1000;
+    if (range > 10000) step = 2000;
+
+    const ticks = [];
+    for (let v = yMin; v <= yMax; v += step) ticks.push(v);
+    if (ticks[ticks.length - 1] < yMax) ticks.push(yMax);
+
+    return { yRightMin: yMin, yRightMax: yMax, yRightTicks: ticks };
+  }, [flights, startWeek, endWeek]);
+
   const tickInterval = chartData.length <= 14 ? 0 : Math.floor(chartData.length / 12);
 
   return (
@@ -147,7 +185,7 @@ const View3 = ({ data, isActive }) => {
             Analyse des Causes de Retard {new Date().getFullYear()}
           </h3>
           <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-            {periodLabel}
+            {periodLabel} — échelle des vols auto-adaptée
           </p>
         </div>
         <PeriodToggle value={period} onChange={setPeriod} />
@@ -163,8 +201,23 @@ const View3 = ({ data, isActive }) => {
               interval={tickInterval}
               tick={{ fontSize: 11 }}
             />
-            <YAxis yAxisId="left" stroke="var(--text-muted)" domain={[0, yLeftMax]} ticks={yLeftTicks} />
-            <YAxis yAxisId="right" orientation="right" stroke="var(--text-muted)" domain={[0, yRightMax]} ticks={yRightTicks} />
+            <YAxis
+              yAxisId="left"
+              stroke="var(--text-muted)"
+              domain={[0, yLeftMax]}
+              ticks={yLeftTicks}
+              tickFormatter={formatCompact}
+              width={60}
+            />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              stroke="var(--text-muted)"
+              domain={[yRightMin, yRightMax]}
+              ticks={yRightTicks}
+              tickFormatter={formatCompact}
+              width={60}
+            />
             <Tooltip content={<CustomChartTooltip />} cursor={false} />
             <Legend content={<CausesOnlyLegend currentYear={new Date().getFullYear()} />} />
             <Bar yAxisId="left" dataKey="Capacity/Staffing" stackId="a" fill={CAUSE_COLORS.capacity} />

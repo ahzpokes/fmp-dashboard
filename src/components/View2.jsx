@@ -11,6 +11,13 @@ const formatNumber = (value) => {
   return value.toLocaleString('fr-FR');
 };
 
+const formatCompact = (value) => {
+  if (value === undefined || value === null) return '';
+  if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
+  return value.toString();
+};
+
 const CustomChartTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
 
@@ -104,24 +111,53 @@ const View2 = ({ data, isActive }) => {
       .filter(d => d.week >= startWeek && d.week <= endWeek);
   }, [weeks, totalDelays, totalDelaysPrev, flights, flightsPrev, startWeek, endWeek, currentYear, previousYear]);
 
-  // Max calculés sur la plage sélectionnée uniquement
+  // ─── Axe GAUCHE (délais, barres) : toujours à 0 ───
   const maxDelay = Math.max(
     1,
     ...totalDelays.slice(startWeek - 1, endWeek),
     ...totalDelaysPrev.slice(startWeek - 1, endWeek)
   );
-  const maxFlights = Math.max(
-    1,
-    ...flights.slice(startWeek - 1, endWeek),
-    ...flightsPrev.slice(startWeek - 1, endWeek)
-  );
-
   const yLeftMax = Math.ceil(maxDelay / 500) * 500 || 500;
   const yLeftTicks = Array.from({ length: yLeftMax / 500 + 1 }, (_, i) => i * 500);
-  const yRightMax = Math.ceil(maxFlights / 5000) * 5000 || 5000;
-  const yRightTicks = Array.from({ length: yRightMax / 5000 + 1 }, (_, i) => i * 5000);
 
-  // Interval pour les ticks X : tous les points si peu de semaines, sinon espacé
+  // ─── Axe DROIT (vols, lignes) : auto-scale ───
+  const { yRightMin, yRightMax, yRightTicks } = useMemo(() => {
+    const flightsN = flights.slice(startWeek - 1, endWeek).filter(v => v > 0);
+    const flightsN1 = flightsPrev.slice(startWeek - 1, endWeek).filter(v => v > 0);
+    const allVals = [...flightsN, ...flightsN1];
+
+    if (allVals.length === 0) {
+      return { yRightMin: 0, yRightMax: 1000, yRightTicks: [0, 500, 1000] };
+    }
+
+    const min = Math.min(...allVals);
+    const max = Math.max(...allVals);
+
+    // Padding de 10% en dessous du minimum, 5% au-dessus du maximum
+    const paddingBottom = Math.max(100, min * 0.10);
+    const paddingTop = Math.max(100, max * 0.05);
+
+    const rawMin = Math.max(0, min - paddingBottom);
+    const rawMax = max + paddingTop;
+
+    // Arrondi à la centaine
+    const yMin = Math.floor(rawMin / 100) * 100;
+    const yMax = Math.ceil(rawMax / 100) * 100;
+
+    // Génération des ticks avec un pas adapté
+    const range = yMax - yMin;
+    let step = 100;
+    if (range > 2000) step = 500;
+    if (range > 5000) step = 1000;
+    if (range > 10000) step = 2000;
+
+    const ticks = [];
+    for (let v = yMin; v <= yMax; v += step) ticks.push(v);
+    if (ticks[ticks.length - 1] < yMax) ticks.push(yMax);
+
+    return { yRightMin: yMin, yRightMax: yMax, yRightTicks: ticks };
+  }, [flights, flightsPrev, startWeek, endWeek]);
+
   const tickInterval = chartData.length <= 14 ? 0 : Math.floor(chartData.length / 12);
 
   return (
@@ -132,7 +168,7 @@ const View2 = ({ data, isActive }) => {
             Trafic et Délai – {currentYear} vs {previousYear}
           </h3>
           <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-            {periodLabel}
+            {periodLabel} — échelle des vols auto-adaptée
           </p>
         </div>
         <PeriodToggle value={period} onChange={setPeriod} />
@@ -148,8 +184,23 @@ const View2 = ({ data, isActive }) => {
               interval={tickInterval}
               tick={{ fontSize: 11 }}
             />
-            <YAxis yAxisId="left" stroke="var(--text-muted)" domain={[0, yLeftMax]} ticks={yLeftTicks} />
-            <YAxis yAxisId="right" orientation="right" stroke="var(--text-muted)" domain={[0, yRightMax]} ticks={yRightTicks} />
+            <YAxis
+              yAxisId="left"
+              stroke="var(--text-muted)"
+              domain={[0, yLeftMax]}
+              ticks={yLeftTicks}
+              tickFormatter={formatCompact}
+              width={60}
+            />
+            <YAxis
+              yAxisId="right"
+              orientation="right"
+              stroke="var(--text-muted)"
+              domain={[yRightMin, yRightMax]}
+              ticks={yRightTicks}
+              tickFormatter={formatCompact}
+              width={60}
+            />
             <Tooltip content={<CustomChartTooltip />} cursor={false} />
             <Legend content={<TrafficAndDelayLegend currentYear={currentYear} previousYear={previousYear} />} />
 
