@@ -11,13 +11,16 @@ const formatNumber = (value: number | undefined | null): string => {
   return value.toLocaleString('fr-FR');
 };
 
-const formatCompact = (value: number | undefined | null): string => {
+<<<<<<< HEAD:src/components/View2.jsx
+const formatCompact = (value) => {
   if (value === undefined || value === null) return '';
   if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
   return value.toString();
 };
 
+const CustomChartTooltip = ({ active, payload, label }) => {
+=======
 interface CustomChartTooltipProps {
   active?: boolean;
   payload?: any[];
@@ -25,6 +28,7 @@ interface CustomChartTooltipProps {
 }
 
 const CustomChartTooltip = ({ active, payload, label }: CustomChartTooltipProps) => {
+>>>>>>> 3fa2e07 (feat: complete migration to TypeScript, fix tsconfig, cleanup JSX duplicates & optimize Vite bundle):src/components/View2.tsx
   if (!active || !payload || !payload.length) return null;
 
   const currentYear = new Date().getFullYear();

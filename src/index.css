@@ -13,8 +13,8 @@
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #64748b;
-  --accent-amber: #d97706;
-  --accent-cyan: #0891b2;
+  --accent-amber: #b45309;
+  --accent-cyan: #0e7490;
   --line-current: #1e3a8a;
   --line-previous: #7e22ce;
 }
@@ -29,7 +29,7 @@ html.dark {
   --border-subtle: #3a3a3a;
   --text-primary: #ffffff;
   --text-secondary: #b0b3b8;
-  --text-muted: #808080;
+  --text-muted: #94a3b8;
   --accent-amber: #f59e0b;
   --accent-cyan: #22d3ee;
   --line-current: #ffffff;
