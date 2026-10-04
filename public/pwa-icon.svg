@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#0b1329"/>
+  <!-- Radar concentric circles -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#1e293b" stroke-width="6"/>
+  <circle cx="256" cy="256" r="120" fill="none" stroke="#334155" stroke-width="4" stroke-dasharray="8 8"/>
+  <circle cx="256" cy="256" r="60" fill="none" stroke="#475569" stroke-width="3"/>
+  <!-- Crosshair lines -->
+  <line x1="76" y1="256" x2="436" y2="256" stroke="#1e293b" stroke-width="4"/>
+  <line x1="256" y1="76" x2="256" y2="436" stroke="#1e293b" stroke-width="4"/>
+  <!-- Airplane icon -->
+  <path d="M256 120 L280 220 L390 270 L390 300 L280 265 L276 360 L310 390 L310 410 L256 395 L202 410 L202 390 L236 360 L232 265 L122 300 L122 270 L232 220 Z" fill="#f59e0b"/>
+  <!-- Glow dots -->
+  <circle cx="340" cy="180" r="10" fill="#3b82f6"/>
+  <circle cx="160" cy="320" r="8" fill="#10b981"/>
+</svg>
