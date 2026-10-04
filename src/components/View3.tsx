@@ -2,35 +2,43 @@ import React, { useEffect, useState, useMemo } from 'react';
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { getAnnualSeries, getLastCompleteWeek } from '../utils/dataHelpers';
-import { TrafficAndDelayLegend } from './ChartLegends';
+import { getAnnualSeries, getLastCompleteWeek, type AccData } from '../utils/dataHelpers';
+import { CAUSE_COLORS } from '../utils/theme';
+import { CausesOnlyLegend } from './ChartLegends';
 import PeriodToggle from './PeriodToggle';
 
-const formatNumber = (value) => {
+const formatNumber = (value: number | undefined | null): string => {
   if (value === undefined || value === null) return '';
   return value.toLocaleString('fr-FR');
 };
 
-const formatCompact = (value) => {
+const formatCompact = (value: number | undefined | null): string => {
   if (value === undefined || value === null) return '';
   if (Math.abs(value) >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
   if (Math.abs(value) >= 1_000) return `${(value / 1_000).toFixed(0)}K`;
   return value.toString();
 };
 
-const CustomChartTooltip = ({ active, payload, label }) => {
-  if (!active || !payload || !payload.length) return null;
+interface CustomChartTooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
 
-  const currentYear = new Date().getFullYear();
-  const previousYear = currentYear - 1;
+const CustomChartTooltip = ({ active, payload, label }: CustomChartTooltipProps) => {
+  if (!active || !payload || !payload.length) return null;
 
   const valueMap = {};
   payload.forEach(entry => { valueMap[entry.dataKey] = entry.value; });
 
-  const delayN = valueMap[`Délai ${currentYear}`] ?? 0;
-  const delayN1 = valueMap[`Délai ${previousYear}`] ?? 0;
-  const volN = valueMap[`Vols ${currentYear}`] ?? 0;
-  const volN1 = valueMap[`Vols ${previousYear}`] ?? 0;
+  const rows = [
+    { key: 'Capacity/Staffing', label: 'Capacity/Staffing', color: CAUSE_COLORS.capacity },
+    { key: 'Weather', label: 'Weather', color: CAUSE_COLORS.weather },
+    { key: 'Other', label: 'Other', color: CAUSE_COLORS.other },
+    { key: 'Disruption', label: 'Disruption', color: CAUSE_COLORS.disruption },
+  ];
+
+  const total = rows.reduce((sum, r) => sum + (valueMap[r.key] ?? 0), 0);
 
   return (
     <div style={{
@@ -40,31 +48,50 @@ const CustomChartTooltip = ({ active, payload, label }) => {
       color: 'var(--text-primary)', minWidth: 220,
     }}>
       <div style={{
-        display: 'grid', gridTemplateColumns: 'auto 1fr 1fr', gap: 12,
+        display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 12,
         fontWeight: 'bold', marginBottom: 6,
         borderBottom: '1px solid var(--border-color)', paddingBottom: 6,
       }}>
         <span>Semaine {label}</span>
-        <span style={{ color: 'var(--accent-amber)', textAlign: 'right' }}>{currentYear}</span>
-        <span style={{ color: 'var(--accent-cyan)', textAlign: 'right' }}>{previousYear}</span>
+        <span style={{ color: 'var(--accent-amber)', textAlign: 'right' }}>
+          {new Date().getFullYear()}
+        </span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr', gap: '4px 12px' }}>
-        <span>Délai (min)</span>
-        <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{formatNumber(delayN)}</span>
-        <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', opacity: 0.7 }}>{formatNumber(delayN1)}</span>
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px' }}>
+        {rows.map((row, i) => (
+          <React.Fragment key={i}>
+            <span style={{ color: row.color, fontWeight: 500 }}>{row.label}</span>
+            <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+              {formatNumber(valueMap[row.key] ?? 0)}
+            </span>
+          </React.Fragment>
+        ))}
+        <div style={{ gridColumn: 'span 2', borderTop: '1px solid var(--border-color)', margin: '6px 0' }} />
+        <span style={{ fontWeight: 'bold' }}>TOTAL DÉLAI</span>
+        <span style={{ color: 'var(--accent-amber)', textAlign: 'right', fontWeight: 'bold', fontVariantNumeric: 'tabular-nums' }}>
+          {formatNumber(total)}
+        </span>
         <span>Vols</span>
-        <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{formatNumber(volN)}</span>
-        <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', opacity: 0.7 }}>{formatNumber(volN1)}</span>
+        <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+          {formatNumber(valueMap['Vols'] ?? 0)}
+        </span>
       </div>
     </div>
   );
 };
 
-const View2 = ({ data, isActive }) => {
-  const currentYear = new Date().getFullYear();
-  const previousYear = currentYear - 1;
+interface View3Props {
+  data: AccData;
+  isActive?: boolean;
+}
 
-  const { weeks, flights, flightsPrev, totalDelays, totalDelaysPrev } = getAnnualSeries(data);
+const View3 = ({ data, isActive }: View3Props) => {
+  const {
+    weeks,
+    flights,
+    delaysByCause: { capacityStaffing, weather, other, disruption }
+  } = getAnnualSeries(data);
+
   const lastWeekWithData = getLastCompleteWeek(data);
 
   const [period, setPeriod] = useState('12w');
@@ -103,35 +130,36 @@ const View2 = ({ data, isActive }) => {
     return weeks
       .map((w, idx) => ({
         week: w,
-        [`Délai ${currentYear}`]: Math.round(totalDelays[idx] || 0),
-        [`Délai ${previousYear}`]: Math.round(totalDelaysPrev[idx] || 0),
-        [`Vols ${currentYear}`]: Math.round(flights[idx] || 0),
-        [`Vols ${previousYear}`]: Math.round(flightsPrev[idx] || 0),
+        'Capacity/Staffing': capacityStaffing[idx] || 0,
+        'Weather': weather[idx] || 0,
+        'Other': other[idx] || 0,
+        'Disruption': disruption[idx] || 0,
+        'Vols': flights[idx] || 0,
       }))
       .filter(d => d.week >= startWeek && d.week <= endWeek);
-  }, [weeks, totalDelays, totalDelaysPrev, flights, flightsPrev, startWeek, endWeek, currentYear, previousYear]);
+  }, [weeks, capacityStaffing, weather, other, disruption, flights, startWeek, endWeek]);
 
   // ─── Axe GAUCHE (délais, barres) : toujours à 0 ───
   const maxDelay = Math.max(
     1,
-    ...totalDelays.slice(startWeek - 1, endWeek),
-    ...totalDelaysPrev.slice(startWeek - 1, endWeek)
+    ...capacityStaffing.slice(startWeek - 1, endWeek).map((v, i) => {
+      const idx = startWeek - 1 + i;
+      return v + (weather[idx] || 0) + (other[idx] || 0) + (disruption[idx] || 0);
+    })
   );
   const yLeftMax = Math.ceil(maxDelay / 500) * 500 || 500;
   const yLeftTicks = Array.from({ length: yLeftMax / 500 + 1 }, (_, i) => i * 500);
 
-  // ─── Axe DROIT (vols, lignes) : auto-scale ───
+  // ─── Axe DROIT (vols, ligne) : auto-scale ───
   const { yRightMin, yRightMax, yRightTicks } = useMemo(() => {
-    const flightsN = flights.slice(startWeek - 1, endWeek).filter(v => v > 0);
-    const flightsN1 = flightsPrev.slice(startWeek - 1, endWeek).filter(v => v > 0);
-    const allVals = [...flightsN, ...flightsN1];
+    const flightsPeriod = flights.slice(startWeek - 1, endWeek).filter(v => v > 0);
 
-    if (allVals.length === 0) {
+    if (flightsPeriod.length === 0) {
       return { yRightMin: 0, yRightMax: 1000, yRightTicks: [0, 500, 1000] };
     }
 
-    const min = Math.min(...allVals);
-    const max = Math.max(...allVals);
+    const min = Math.min(...flightsPeriod);
+    const max = Math.max(...flightsPeriod);
 
     // Padding de 10% en dessous du minimum, 5% au-dessus du maximum
     const paddingBottom = Math.max(100, min * 0.10);
@@ -156,7 +184,7 @@ const View2 = ({ data, isActive }) => {
     if (ticks[ticks.length - 1] < yMax) ticks.push(yMax);
 
     return { yRightMin: yMin, yRightMax: yMax, yRightTicks: ticks };
-  }, [flights, flightsPrev, startWeek, endWeek]);
+  }, [flights, startWeek, endWeek]);
 
   const tickInterval = chartData.length <= 14 ? 0 : Math.floor(chartData.length / 12);
 
@@ -164,8 +192,8 @@ const View2 = ({ data, isActive }) => {
     <div className="theme-card p-5 rounded-lg">
       <div className="flex justify-between items-start mb-4 flex-wrap gap-3">
         <div>
-          <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Trafic et Délai – {currentYear} vs {previousYear}
+          <h3 className="text-base font-semibold text-primary">
+            Analyse des Causes de Retard {new Date().getFullYear()}
           </h3>
           <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
             {periodLabel} — échelle des vols auto-adaptée
@@ -202,14 +230,13 @@ const View2 = ({ data, isActive }) => {
               width={60}
             />
             <Tooltip content={<CustomChartTooltip />} cursor={false} />
-            <Legend content={<TrafficAndDelayLegend currentYear={currentYear} previousYear={previousYear} />} />
-
-            <Bar yAxisId="left" dataKey={`Délai ${currentYear}`} fill="#3b82f6" />
-            <Bar yAxisId="left" dataKey={`Délai ${previousYear}`} fill="#93c5fd" />
-            <Line yAxisId="right" type="monotone" dataKey={`Vols ${currentYear}`}
+            <Legend content={<CausesOnlyLegend currentYear={new Date().getFullYear()} />} />
+            <Bar yAxisId="left" dataKey="Capacity/Staffing" stackId="a" fill={CAUSE_COLORS.capacity} />
+            <Bar yAxisId="left" dataKey="Weather" stackId="a" fill={CAUSE_COLORS.weather} />
+            <Bar yAxisId="left" dataKey="Other" stackId="a" fill={CAUSE_COLORS.other} />
+            <Bar yAxisId="left" dataKey="Disruption" stackId="a" fill={CAUSE_COLORS.disruption} />
+            <Line yAxisId="right" type="monotone" dataKey="Vols"
               stroke="var(--line-current)" dot={false} strokeWidth={2.5} />
-            <Line yAxisId="right" type="monotone" dataKey={`Vols ${previousYear}`}
-              stroke="var(--line-previous)" dot={false} strokeWidth={2} strokeDasharray="5 5" />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
@@ -217,4 +244,4 @@ const View2 = ({ data, isActive }) => {
   );
 };
 
-export default View2;
+export default View3;

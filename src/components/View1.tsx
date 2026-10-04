@@ -3,10 +3,10 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ReferenceLine, Cell
 } from 'recharts';
-import { getAnnualSeries, getLastCompleteWeek, computeAnnualKPIs } from '../utils/dataHelpers';
+import { getAnnualSeries, getLastCompleteWeek, computeAnnualKPIs, type AccData } from '../utils/dataHelpers';
 import { CAUSE_COLORS } from '../utils/theme';
 
-const formatNumber = (value) => {
+const formatNumber = (value: number | undefined | null): string => {
   if (value === undefined || value === null) return '';
   return value.toLocaleString('fr-FR');
 };
@@ -16,7 +16,12 @@ const COLOR_BETTER = '#10b981'; // vert : N sous N-1 (mieux)
 const COLOR_WORSE = '#ef4444';  // rouge : N au-dessus de N-1 (moins bien)
 
 // Tooltip pour l'écartogramme
-const GapTooltip = ({ active, payload }) => {
+interface GapTooltipProps {
+  active?: boolean;
+  payload?: any[];
+}
+
+const GapTooltip = ({ active, payload }: GapTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
   const data = payload[0].payload;
 
@@ -28,30 +33,22 @@ const GapTooltip = ({ active, payload }) => {
   const previousYear = currentYear - 1;
 
   return (
-    <div style={{
-      backgroundColor: 'var(--bg-card)',
-      border: '1px solid var(--border-color)',
-      borderRadius: 6, padding: '10px 14px', fontSize: 12,
-      color: 'var(--text-primary)', minWidth: 220,
-    }}>
-      <div style={{
-        fontWeight: 'bold', borderBottom: '1px solid var(--border-color)',
-        paddingBottom: 4, marginBottom: 6,
-      }}>
+    <div className="tooltip">
+      <div className="divider-x">
         Semaine {data.week}
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px' }}>
-        <span style={{ color: 'var(--accent-amber)' }}>{currentYear}</span>
-        <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
+      <div className="grid-2-auto">
+        <span className="text-accent-amber">{currentYear}</span>
+        <span className="text-right tabular-nums">
           {data.delayN !== null ? `${data.delayN.toFixed(2)} min` : 'N/A'}
         </span>
-        <span style={{ color: 'var(--accent-cyan)' }}>{previousYear}</span>
-        <span style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums', opacity: 0.8 }}>
+        <span className="text-accent-cyan">{previousYear}</span>
+        <span className="text-right tabular-nums" style={{ opacity: 0.8 }}>
           {data.delayN1 !== null ? `${data.delayN1.toFixed(2)} min` : 'N/A'}
         </span>
-        <div style={{ gridColumn: 'span 2', borderTop: '1px solid var(--border-color)', margin: '6px 0' }} />
-        <span style={{ fontWeight: 'bold', color }}>Écart</span>
-        <span style={{ textAlign: 'right', fontWeight: 'bold', color, fontVariantNumeric: 'tabular-nums' }}>
+        <div className="divider-y" style={{ gridColumn: 'span 2' }} />
+        <span className="font-bold" style={{ color }}>Écart</span>
+        <span className="text-right font-bold tabular-nums" style={{ color }}>
           {data.gapPct >= 0 ? '+' : ''}{data.gapPct.toFixed(1)}%
         </span>
       </div>
@@ -62,7 +59,12 @@ const GapTooltip = ({ active, payload }) => {
   );
 };
 
-const View1 = ({ data, isActive }) => {
+interface View1Props {
+  data: AccData;
+  isActive?: boolean;
+}
+
+const View1 = ({ data, isActive }: View1Props) => {
   const currentYear = new Date().getFullYear();
   const previousYear = currentYear - 1;
 
@@ -146,7 +148,7 @@ const View1 = ({ data, isActive }) => {
         <div className="theme-card p-5 rounded-lg lg:col-span-2">
           <div className="flex justify-between items-start mb-4 flex-wrap gap-2">
             <div>
-              <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+              <h3 className="text-base font-semibold text-primary">
                 Écart de Délai Moyen / Vol – Semaine par Semaine
               </h3>
               <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
@@ -213,7 +215,7 @@ const View1 = ({ data, isActive }) => {
               </span>
               <span className="theme-text-muted">·</span>
               <span>
-                Soit <strong style={{ color: 'var(--text-primary)' }}>
+                Soit <strong className="text-primary">
                   {((goodWeeksCount / totalWeeks) * 100).toFixed(0)}%
                 </strong> de semaines en amélioration
               </span>
@@ -223,7 +225,7 @@ const View1 = ({ data, isActive }) => {
 
         {/* Carte "Points Clés" */}
         <div className="theme-card p-5 rounded-lg flex flex-col">
-          <h3 className="text-base font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="text-base font-semibold mb-4 flex items-center gap-2 text-primary">
             <svg className="w-5 h-5" style={{ color: 'var(--accent-amber)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>

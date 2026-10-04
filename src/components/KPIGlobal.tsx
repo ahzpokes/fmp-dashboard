@@ -1,7 +1,12 @@
 import React from 'react';
-import { computeAnnualKPIs, getLastCompleteWeek } from '../utils/dataHelpers';
+import { computeAnnualKPIs, getLastCompleteWeek, type AccData } from '../utils/dataHelpers';
 
-const TrendBadge = ({ pct, invertColors = false }) => {
+interface TrendBadgeProps {
+  pct: number;
+  invertColors?: boolean;
+}
+
+const TrendBadge = ({ pct, invertColors = false }: TrendBadgeProps) => {
   // invertColors : true si une hausse est mauvaise (délais), false si hausse bonne (vols)
   const isPositive = invertColors ? pct < 0 : pct >= 0;
   const color = isPositive ? '#10b981' : '#ef4444';
@@ -20,7 +25,11 @@ const TrendBadge = ({ pct, invertColors = false }) => {
   );
 };
 
-const KPIGlobal = ({ data }) => {
+interface KPIGlobalProps {
+  data: AccData;
+}
+
+const KPIGlobal = ({ data }: KPIGlobalProps) => {
   const maxWeek = getLastCompleteWeek(data);
   const {
     flights, flightsPrev, totalDelay, totalDelayPrev,
@@ -33,7 +42,7 @@ const KPIGlobal = ({ data }) => {
       {/* Statut / Contexte */}
       <div className="theme-card p-5 rounded-lg">
         <div className="text-xs uppercase tracking-wider theme-text-muted mb-2">Statut des Données</div>
-        <div className="text-2xl font-bold" style={{ color: 'var(--accent-amber)' }}>
+        <div className="text-2xl font-bold text-accent-amber">
           Semaine {lastWeekWithData} complète
         </div>
         <div className="text-xs theme-text-muted mt-1">Consolidé à date</div>
@@ -42,7 +51,7 @@ const KPIGlobal = ({ data }) => {
       {/* Vols */}
       <div className="theme-card p-5 rounded-lg">
         <div className="text-xs uppercase tracking-wider theme-text-muted mb-2">Nombre de Vols</div>
-        <div className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+        <div className="text-3xl font-bold tracking-tight text-primary">
           {flights.toLocaleString('fr-FR')}
         </div>
         <TrendBadge pct={flightsPct} invertColors={false} />
@@ -51,7 +60,7 @@ const KPIGlobal = ({ data }) => {
       {/* Délai total */}
       <div className="theme-card p-5 rounded-lg">
         <div className="text-xs uppercase tracking-wider theme-text-muted mb-2">Délai Total</div>
-        <div className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+        <div className="text-3xl font-bold tracking-tight text-primary">
           {totalDelay.toLocaleString('fr-FR')}
           <span className="text-sm font-normal theme-text-muted ml-1">min</span>
         </div>
@@ -61,7 +70,7 @@ const KPIGlobal = ({ data }) => {
       {/* Délai moyen */}
       <div className="theme-card p-5 rounded-lg">
         <div className="text-xs uppercase tracking-wider theme-text-muted mb-2">Délai Moyen / Vol</div>
-        <div className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+        <div className="text-3xl font-bold tracking-tight text-primary">
           {avgDelay.toFixed(2)}
           <span className="text-sm font-normal theme-text-muted ml-1">min</span>
         </div>

@@ -1,12 +1,19 @@
 import React from 'react';
 
-const OPTIONS = [
+type PeriodOption = '4w' | '12w' | 'year';
+
+const OPTIONS: { id: PeriodOption; label: string }[] = [
   { id: '4w', label: '4 sem' },
   { id: '12w', label: '12 sem' },
   { id: 'year', label: '1 an' },
 ];
 
-const PeriodToggle = ({ value, onChange }) => {
+interface PeriodToggleProps {
+  value: PeriodOption;
+  onChange: (value: PeriodOption) => void;
+}
+
+const PeriodToggle = ({ value, onChange }: PeriodToggleProps) => {
   return (
     <div
       className="flex rounded-lg p-1 text-xs"

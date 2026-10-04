@@ -8,15 +8,22 @@ import View3 from './components/View3';
 import View4 from './components/View4';
 import View5 from './components/View5';
 import Footer from './components/Footer';
-import localData from './data/traffic_data.json';
-import { getLastCompleteWeek, getWeekData } from './utils/dataHelpers';
+import { getLastCompleteWeek, getWeekData, type AccData } from './utils/dataHelpers';
 import { FRENCH_ACC, slugToAcc, accToSlug } from './utils/theme';
 import { DATA_URL } from './config';
 
+type DataSource = 'remote' | 'local' | 'loading';
+type Theme = 'light' | 'dark';
+
+interface DataWithGeneratedAt {
+  [key: string]: AccData | string;
+  generated_at?: string;
+}
+
 function App() {
-  const [data, setData] = useState(null);
-  const [dataError, setDataError] = useState(null);
-  const [dataSource, setDataSource] = useState('loading'); // 'remote' | 'local' | 'loading'
+  const [data, setData] = useState<DataWithGeneratedAt | null>(null);
+  const [dataError, setDataError] = useState<string | null>(null);
+  const [dataSource, setDataSource] = useState<DataSource>('loading');
 
   // ─── Charge les données depuis jsDelivr avec cache-buster + fallback local ───
   useEffect(() => {
@@ -34,12 +41,20 @@ function App() {
           setData(json);
           setDataSource('remote');
         }
-      } catch (err) {
+      } catch (err: any) {
         console.warn('Fallback local :', err.message);
-        if (!cancelled) {
-          setData(localData);
-          setDataError(err.message);
-          setDataSource('local');
+        try {
+          const fallbackData = (await import('./data/traffic_data.json')).default;
+          if (!cancelled) {
+            setData(fallbackData as unknown as DataWithGeneratedAt);
+            setDataError(err.message);
+            setDataSource('local');
+          }
+        } catch (fallbackErr: any) {
+          if (!cancelled) {
+            setDataError(`Échec du chargement distant (${err.message}) et local (${fallbackErr.message})`);
+            setDataSource('local');
+          }
         }
       }
     };
@@ -49,7 +64,7 @@ function App() {
   }, []);
 
   // ─── Routage par pathname (/reims, /brest, ...) avec fallback query ───
-  const [selectedAcc, setSelectedAcc] = useState(() => {
+  const [selectedAcc, setSelectedAcc] = useState<string>(() => {
     const path = window.location.pathname.replace(/^\/|\/$/g, '');
     const fromPath = slugToAcc(path);
     if (fromPath) return fromPath;
@@ -57,14 +72,14 @@ function App() {
     // Compat avec l'ancien ?acc=REIMS+ACC
     const params = new URLSearchParams(window.location.search);
     const fromQuery = params.get('acc');
-    if (fromQuery && localData[fromQuery]) return fromQuery;
+    if (fromQuery) return fromQuery;
 
     return 'REIMS ACC';
   });
 
   // ─── Thème : light par défaut ───
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('dashboard-theme') || 'light';
+  const [theme, setTheme] = useState<Theme>(() => {
+    return (localStorage.getItem('dashboard-theme') as Theme) || 'light';
   });
 
   // ─── Tous les hooks doivent être appelés AVANT tout return conditionnel ───
@@ -93,7 +108,7 @@ function App() {
   const toggleTheme = () => setTheme(t => (t === 'dark' ? 'light' : 'dark'));
 
   // Données de l'ACC sélectionné (null si data pas encore chargé)
-  const accData = data ? data[selectedAcc] : null;
+  const accData: AccData | null = data ? (data[selectedAcc] as AccData) : null;
 
   // Date de mise à jour (extraite du JSON)
   const lastUpdate = useMemo(() => {

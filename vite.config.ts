@@ -6,5 +6,13 @@ export default defineConfig({
   base: './', // pour GitLab Pages
   build: {
     outDir: 'dist',
-  }
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-recharts': ['recharts'],
+        },
+      },
+    },
+  },
 })

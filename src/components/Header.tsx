@@ -1,6 +1,18 @@
 import React, { useMemo } from 'react';
 import { FRENCH_ACC } from '../utils/theme';
 
+type Theme = 'light' | 'dark';
+
+interface HeaderProps {
+  selectedAcc: string;
+  setSelectedAcc: (acc: string) => void;
+  lastUpdate: Date;
+  accList: string[];
+  lastCompleteWeekLabel: string;
+  theme: Theme;
+  toggleTheme: () => void;
+}
+
 const Header = ({
   selectedAcc,
   setSelectedAcc,
@@ -9,7 +21,7 @@ const Header = ({
   lastCompleteWeekLabel,
   theme,
   toggleTheme,
-}) => {
+}: HeaderProps) => {
   // Séparer les ACC DSNA des autres ACC
   const { dsnaAccs, otherAccs } = useMemo(() => {
     const dsna = accList.filter(acc => FRENCH_ACC.includes(acc));
@@ -20,18 +32,13 @@ const Header = ({
   return (
     <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
       <div className="flex items-center gap-4 flex-wrap">
-        <h1 className="text-2xl font-bold tracking-wide" style={{ color: 'var(--text-primary)' }}>
+        <h1 className="text-2xl font-bold tracking-wide text-primary">
           Performance Trafic & Délais
         </h1>
         <select
           value={selectedAcc}
           onChange={(e) => setSelectedAcc(e.target.value)}
-          className="rounded px-3 py-1.5 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
-          style={{
-            backgroundColor: 'var(--bg-card)',
-            color: 'var(--text-primary)',
-            border: '1px solid var(--border-color)',
-          }}
+          className="rounded px-3 py-1.5 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm theme-card theme-border text-primary"
         >
           {dsnaAccs.length > 0 && (
             <optgroup label="ACC Français (DSNA)">
@@ -58,11 +65,7 @@ const Header = ({
           Mise à jour : {lastUpdate.toLocaleString('fr-FR')}
         </span>
         {lastCompleteWeekLabel && (
-          <span className="text-xs font-semibold border-l pl-3"
-            style={{
-              color: 'var(--accent-amber)',
-              borderColor: 'var(--border-color)',
-            }}>
+          <span className="text-xs font-semibold border-l pl-3 text-accent-amber theme-border">
             {lastCompleteWeekLabel}
           </span>
         )}
@@ -70,12 +73,7 @@ const Header = ({
         <button
           onClick={toggleTheme}
           title={theme === 'dark' ? 'Passer en mode clair' : 'Passer en mode sombre'}
-          className="p-2 rounded-md border transition-colors"
-          style={{
-            backgroundColor: 'var(--bg-card)',
-            borderColor: 'var(--border-color)',
-            color: 'var(--text-secondary)',
-          }}
+          className="p-2 rounded-md border transition-colors button-themed"
         >
           {theme === 'dark' ? (
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

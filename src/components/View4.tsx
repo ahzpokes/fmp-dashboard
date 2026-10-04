@@ -3,19 +3,25 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, ReferenceLine
 } from 'recharts';
-import { getWeekData, getLastWeekWithData, computeWeekKPIs } from '../utils/dataHelpers';
+import { getWeekData, getLastWeekWithData, computeWeekKPIs, type AccData } from '../utils/dataHelpers';
 import { CAUSE_COLORS, CAUSE_COLORS_PREV } from '../utils/theme';
 import { WeeklyLegend } from './ChartLegends';
 
 const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
-const formatDate = (dateStr) => {
+const formatDate = (dateStr: string): string => {
   if (!dateStr) return '';
   const d = new Date(dateStr);
   return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`;
 };
 
-const CustomChartTooltip = ({ active, payload, label }) => {
+interface CustomChartTooltipProps {
+  active?: boolean;
+  payload?: any[];
+  label?: string;
+}
+
+const CustomChartTooltip = ({ active, payload, label }: CustomChartTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
   const dayIndex = DAYS.indexOf(label);
@@ -91,7 +97,12 @@ const CustomChartTooltip = ({ active, payload, label }) => {
   );
 };
 
-const View4 = ({ data, isActive }) => {
+interface View4Props {
+  data: AccData;
+  isActive?: boolean;
+}
+
+const View4 = ({ data, isActive }: View4Props) => {
   const initialWeek = useMemo(() => getLastWeekWithData(data), [data]);
   const [selectedWeek, setSelectedWeek] = useState(initialWeek);
   const [display, setDisplay] = useState('combined');
@@ -262,7 +273,7 @@ const View4 = ({ data, isActive }) => {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         <div className="theme-card p-5 rounded-lg xl:col-span-7">
           <div className="flex flex-wrap justify-between items-center mb-4 gap-2">
-            <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+            <h3 className="text-base font-semibold text-primary">
               Trafic & Délai par Causes - Jours
             </h3>
             <div className="flex rounded-lg p-1 text-xs"
@@ -342,7 +353,7 @@ const View4 = ({ data, isActive }) => {
         </div>
 
         <div className="theme-card p-5 rounded-lg xl:col-span-5">
-          <h3 className="text-base font-semibold mb-3 text-center" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="text-base font-semibold mb-3 text-center text-primary">
             Répartition des Causes de Retard (%)
           </h3>
           <div style={{ width: '100%', height: 340 }}>
@@ -388,22 +399,22 @@ const View4 = ({ data, isActive }) => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="theme-card p-5 rounded-lg">
           <div className="text-xs uppercase tracking-wider theme-text-muted mb-2">Vols sur la Semaine</div>
-          <div className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          <div className="text-3xl font-bold tracking-tight text-primary">
             {kpis.flights.toLocaleString('fr-FR')}
           </div>
           <KpiBadge pct={kpis.flightsPct} invertColors={false} />
         </div>
         <div className="theme-card p-5 rounded-lg">
           <div className="text-xs uppercase tracking-wider theme-text-muted mb-2">Délai Semaine</div>
-          <div className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
-            {kpis.delay.toLocaleString('fr-FR')}
+          <div className="text-3xl font-bold tracking-tight text-primary">
+            {kpis.totalDelay.toLocaleString('fr-FR')}
             <span className="text-sm font-normal theme-text-muted ml-1">min</span>
           </div>
           <KpiBadge pct={kpis.delayPct} invertColors={true} />
         </div>
         <div className="theme-card p-5 rounded-lg">
           <div className="text-xs uppercase tracking-wider theme-text-muted mb-2">Délai Moyen / Vol</div>
-          <div className="text-3xl font-bold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+          <div className="text-3xl font-bold tracking-tight text-primary">
             {kpis.avgDelay.toFixed(2)}
             <span className="text-sm font-normal theme-text-muted ml-1">min</span>
           </div>

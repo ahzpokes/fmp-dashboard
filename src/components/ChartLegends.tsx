@@ -1,6 +1,14 @@
 import React from 'react';
 
-const Item = ({ color, label, shape = 'square', dashed = false, faded = false }) => (
+interface ItemProps {
+  color: string;
+  label: string;
+  shape?: 'square' | 'line';
+  dashed?: boolean;
+  faded?: boolean;
+}
+
+const Item = ({ color, label, shape = 'square', dashed = false, faded = false }: ItemProps) => (
   <span className="flex items-center gap-1.5" style={{ opacity: faded ? 0.55 : 1 }}>
     {shape === 'square' && (
       <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: color }} />
@@ -15,7 +23,11 @@ const Item = ({ color, label, shape = 'square', dashed = false, faded = false })
   </span>
 );
 
-const Container = ({ children }) => (
+interface ContainerProps {
+  children: React.ReactNode;
+}
+
+const Container = ({ children }: ContainerProps) => (
   <div
     className="flex flex-wrap justify-center gap-4 text-xs py-2"
     style={{ color: 'var(--text-secondary)' }}
@@ -31,7 +43,12 @@ const Separator = () => (
 /**
  * Légende pour la Vue 1 : 4 causes + trafic N / N-1
  */
-export const CausesAndTrafficLegend = ({ currentYear, previousYear }) => (
+interface CausesAndTrafficLegendProps {
+  currentYear: number;
+  previousYear: number;
+}
+
+export const CausesAndTrafficLegend = ({ currentYear, previousYear }: CausesAndTrafficLegendProps) => (
   <Container>
     <Item color="#3b82f6" label="Capacity" />
     <Item color="#10b981" label="Weather" />
@@ -49,7 +66,12 @@ export const CausesAndTrafficLegend = ({ currentYear, previousYear }) => (
 /**
  * Légende pour la Vue 2 : Délais N / N-1 + Vols N / N-1
  */
-export const TrafficAndDelayLegend = ({ currentYear, previousYear }) => (
+interface TrafficAndDelayLegendProps {
+  currentYear: number;
+  previousYear: number;
+}
+
+export const TrafficAndDelayLegend = ({ currentYear, previousYear }: TrafficAndDelayLegendProps) => (
   <Container>
     <Item color="#3b82f6" label={`Délai ${currentYear}`} />
     <Item color="#93c5fd" label={`Délai ${previousYear}`} />
@@ -62,7 +84,11 @@ export const TrafficAndDelayLegend = ({ currentYear, previousYear }) => (
 /**
  * Légende pour la Vue 3 : 4 causes + Vols (année N seulement)
  */
-export const CausesOnlyLegend = ({ currentYear }) => (
+interface CausesOnlyLegendProps {
+  currentYear: number;
+}
+
+export const CausesOnlyLegend = ({ currentYear }: CausesOnlyLegendProps) => (
   <Container>
     <Item color="#3b82f6" label="Capacity/Staffing" />
     <Item color="#10b981" label="Weather" />
@@ -76,7 +102,11 @@ export const CausesOnlyLegend = ({ currentYear }) => (
 /**
  * Légende pour la Vue 4 : 4 causes S / S-1 + Vols S / S-1
  */
-export const WeeklyLegend = ({ selectedWeek }) => (
+interface WeeklyLegendProps {
+  selectedWeek: number;
+}
+
+export const WeeklyLegend = ({ selectedWeek }: WeeklyLegendProps) => (
   <Container>
     <Item color="#3b82f6" label="Capacity" />
     <Item color="#10b981" label="Weather" />
@@ -94,7 +124,12 @@ export const WeeklyLegend = ({ selectedWeek }) => (
 /**
  * Légende pour le premier graphique de la Vue 5 : Délais N / N-1
  */
-export const CrnaDelayLegend = ({ currentYear, previousYear }) => (
+interface CrnaDelayLegendProps {
+  currentYear: number;
+  previousYear: number;
+}
+
+export const CrnaDelayLegend = ({ currentYear, previousYear }: CrnaDelayLegendProps) => (
   <Container>
     <Item color="#3b82f6" label={`Délai ${currentYear}`} />
     <Item color="#93c5fd" label={`Délai ${previousYear}`} />

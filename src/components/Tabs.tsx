@@ -1,6 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, ReactNode } from 'react';
 
-const Tabs = ({ children, showDsnaTab = true }) => {
+interface TabsProps {
+  children: ReactNode;
+  showDsnaTab?: boolean;
+}
+
+const Tabs = ({ children, showDsnaTab = true }: TabsProps) => {
   const [activeTab, setActiveTab] = useState('view1');
 
   const currentYear = new Date().getFullYear();

@@ -1,7 +1,88 @@
 /**
+ * Types pour les données du dashboard
+ */
+export interface DelayCause {
+  capacityStaffing: number[];
+  weather: number[];
+  other: number[];
+  disruption: number[];
+  total: number[];
+  isEstimated?: boolean;
+}
+
+export interface AnnualData {
+  weeks: number[];
+  flights: number[];
+  flightsPreviousYear: number[];
+  delays: DelayCause;
+  delaysPreviousYear?: DelayCause;
+  totalDelaysPreviousYear: number[];
+}
+
+export interface WeeklyDayData {
+  days: string[];
+  dates: string[];
+  flights: number[];
+  flightsPreviousYear: number[];
+  delays: DelayCause;
+}
+
+export interface WeeklyData {
+  [weekNumber: string]: WeeklyDayData;
+}
+
+export interface AccData {
+  annual: AnnualData;
+  weekly: WeeklyData;
+}
+
+export interface AnnualSeries {
+  weeks: number[];
+  flights: number[];
+  flightsPrev: number[];
+  totalDelays: number[];
+  totalDelaysPrev: number[];
+  delaysPerFlight: number[];
+  delaysPerFlightPrev: number[];
+  delaysByCause: DelayCause;
+  delaysByCausePrev: DelayCause;
+}
+
+export interface WeekData {
+  days: string[];
+  dates: string[];
+  flights: (number | null)[];
+  flightsPreviousYear: (number | null)[];
+  delays: {
+    capacityStaffing: (number | null)[];
+    weather: (number | null)[];
+    other: (number | null)[];
+    disruption: (number | null)[];
+    total: (number | null)[];
+  };
+  lastDayWithData: number;
+}
+
+export interface KPI {
+  flights: number;
+  flightsPrev: number;
+  totalDelay: number;
+  totalDelayPrev: number;
+  avgDelay: number;
+  avgDelayPrev: number;
+  flightsPct: number;
+  delayPct: number;
+  avgDelayPct: number;
+}
+
+export interface AnnualKPI extends KPI {
+  lastWeekWithData: number;
+}
+
+/**
  * Trouve la dernière semaine avec des données réelles (au moins un vol)
  */
-export function getLastWeekWithData(accData) {
+export function getLastWeekWithData(accData: AccData): number {
   if (!accData?.annual?.flights) return 1;
   const flights = accData.annual.flights;
   const lastIdx = flights.reduce((last, f, idx) => (f > 0 ? idx + 1 : last), 0);
@@ -11,7 +92,7 @@ export function getLastWeekWithData(accData) {
 /**
  * Retourne le numéro de la dernière semaine complète (7 jours de données)
  */
-export function getLastCompleteWeek(accData) {
+export function getLastCompleteWeek(accData: AccData): number {
   if (!accData?.weekly) return 1;
   let lastComplete = 1;
   for (let w = 1; w <= 53; w++) {
@@ -28,7 +109,7 @@ export function getLastCompleteWeek(accData) {
  * Calcule les séries annuelles pour un ACC
  * NOTE : Les causes N-1 sont estimées à partir du ratio (voir fetch_data.py).
  */
-export function getAnnualSeries(accData) {
+export function getAnnualSeries(accData: AccData): AnnualSeries {
   const annual = accData.annual || {};
   const weeks = annual.weeks || Array.from({ length: 53 }, (_, i) => i + 1);
   const flights = (annual.flights || []).map(v => Math.round(v || 0));
@@ -78,7 +159,7 @@ export function getAnnualSeries(accData) {
   };
 }
 
-export function getPieData(data, year = 'current') {
+export function getPieData(data: AccData | WeeklyDayData, year: 'current' | 'previous' = 'current'): Array<{ name: string; value: number }> {
   const causeKeys = ['capacityStaffing', 'weather', 'other', 'disruption'];
   const labels = ['Capacity / Staffing', 'Weather', 'Other', 'Disruption'];
   let delays;
@@ -116,7 +197,7 @@ export function getPieData(data, year = 'current') {
   return causeKeys.map((key, i) => ({ name: labels[i], value: totals[i] }));
 }
 
-export function getWeekData(accData, weekNumber) {
+export function getWeekData(accData: AccData, weekNumber: number): WeekData | null {
   if (!accData.weekly || !accData.weekly[weekNumber]) return null;
 
   const week = accData.weekly[weekNumber];
@@ -155,46 +236,46 @@ export function getWeekData(accData, weekNumber) {
   };
 }
 
-export function computeWeekKPIs(weekData, weekPrevData, maxDays) {
-  const sumValid = (arr) => {
+export function computeWeekKPIs(weekData: WeekData, weekPrevData: WeekData | null, maxDays?: number): KPI {
+  const sumValid = (arr: (number | null)[]): number => {
     if (!arr || !Array.isArray(arr)) return 0;
     const truncated = maxDays !== undefined ? arr.slice(0, maxDays) : arr;
     return truncated
-      .filter(v => v !== null && v !== undefined && !isNaN(v))
+      .filter((v): v is number => v !== null && v !== undefined && !isNaN(v))
       .reduce((a, b) => a + Math.round(b), 0);
   };
 
   const flights = sumValid(weekData.flights);
-  const flightsPrev = sumValid(weekPrevData?.flights);
-  const delay = sumValid(weekData.delays?.total);
-  const delayPrev = sumValid(weekPrevData?.delays?.total);
+  const flightsPrev = weekPrevData ? sumValid(weekPrevData.flights) : 0;
+  const totalDelay = sumValid(weekData.delays.total);
+  const totalDelayPrev = weekPrevData ? sumValid(weekPrevData.delays.total) : 0;
 
-  const avgDelay = flights > 0 ? delay / flights : 0;
-  const avgDelayPrev = flightsPrev > 0 ? delayPrev / flightsPrev : 0;
+  const avgDelay = flights > 0 ? totalDelay / flights : 0;
+  const avgDelayPrev = flightsPrev > 0 ? totalDelayPrev / flightsPrev : 0;
 
   return {
-    flights, flightsPrev, delay, delayPrev, avgDelay, avgDelayPrev,
+    flights, flightsPrev, totalDelay, totalDelayPrev, avgDelay, avgDelayPrev,
     flightsPct: flightsPrev > 0 ? ((flights - flightsPrev) / flightsPrev) * 100 : 0,
-    delayPct: delayPrev > 0 ? ((delay - delayPrev) / delayPrev) * 100 : 0,
+    delayPct: totalDelayPrev > 0 ? ((totalDelay - totalDelayPrev) / totalDelayPrev) * 100 : 0,
     avgDelayPct: avgDelayPrev > 0 ? ((avgDelay - avgDelayPrev) / avgDelayPrev) * 100 : 0,
   };
 }
 
-export function computeAnnualKPIs(accData, maxWeek) {
-  const annual = accData.annual || {};
-  const flightsArr = annual.flights || [];
-  const flightsPrevArr = annual.flightsPreviousYear || [];
-  const delays = annual.delays || {};
+export function computeAnnualKPIs(accData: AccData, maxWeek?: number): AnnualKPI {
+  const annual = accData.annual;
+  const flightsArr = annual.flights;
+  const flightsPrevArr = annual.flightsPreviousYear;
+  const delays = annual.delays;
 
-  const cap = (delays.capacityStaffing || []).map(v => Math.round(v || 0));
-  const wea = (delays.weather || []).map(v => Math.round(v || 0));
-  const oth = (delays.other || []).map(v => Math.round(v || 0));
-  const dis = (delays.disruption || []).map(v => Math.round(v || 0));
+  const cap = delays.capacityStaffing.map(v => Math.round(v || 0));
+  const wea = delays.weather.map(v => Math.round(v || 0));
+  const oth = delays.other.map(v => Math.round(v || 0));
+  const dis = delays.disruption.map(v => Math.round(v || 0));
 
   const totalDelaysArr = cap.map((v, i) => v + (wea[i] || 0) + (oth[i] || 0) + (dis[i] || 0));
-  const totalDelaysPrevArr = (annual.totalDelaysPreviousYear || []).map(v => Math.round(v || 0));
+  const totalDelaysPrevArr = annual.totalDelaysPreviousYear.map(v => Math.round(v || 0));
 
-  let lastWeekWithData;
+  let lastWeekWithData: number;
   if (maxWeek !== undefined && maxWeek !== null) {
     lastWeekWithData = maxWeek;
   } else {
