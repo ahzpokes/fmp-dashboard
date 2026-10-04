@@ -3,14 +3,44 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/pwa-icon.svg" />
+
+    <!-- Icône pour iOS (Add to Home Screen) -->
     <link rel="apple-touch-icon" href="/pwa-icon.svg" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0b1329" />
-    <meta name="description" content="Tableau de bord opérationnel DSNA pour le suivi des performances de trafic et des délais ATFM des centres de contrôle en-route." />
-    <title>Eurocontrol - Dashboard Performance ACC</title>
+    <meta
+      name="description"
+      content="Tableau de bord opérationnel DSNA pour le suivi des performances de trafic et des délais ATFM des centres de contrôle en-route."
+    />
+
+    <!--
+      Manifest PWA dynamique :
+      - L'id "pwa-manifest" permet au hook useDynamicManifest de cibler cette balise
+        et de modifier son href en JS selon le pathname (/brest, /reims, etc.).
+      - La valeur par défaut pointe vers Reims (ACC de repli).
+    -->
+    <link id="pwa-manifest" rel="manifest" href="/manifest-reims.json" />
+
+    <!--
+      Balises iOS spécifiques au mode standalone (Add to Home Screen sur Safari) :
+      - apple-mobile-web-app-capable  : active le mode plein écran
+      - apple-mobile-web-app-status-bar-style : barre de statut transparente sur fond sombre
+      - apple-mobile-web-app-title    : nom affiché sous l'icône sur l'écran d'accueil iOS
+        L'id "apple-mobile-title" permet la mise à jour dynamique via useDynamicManifest.
+    -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      id="apple-mobile-title"
+      name="apple-mobile-web-app-title"
+      content="Reims"
+    />
+
+    <title>DSNA Delay Dashboard - Reims</title>
   </head>
   <body>
-    <!-- 
+    <!--
       ⚠️ Aucune classe Tailwind ici !
       Les couleurs sont gérées par les variables CSS de src/index.css
       pour permettre le toggle Dark/Light sans conflit.

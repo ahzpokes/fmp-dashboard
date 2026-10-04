@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Header from './components/Header';
+import { useDynamicManifest } from './hooks/useDynamicManifest';
 import KPIGlobal from './components/KPIGlobal';
 import Tabs from './components/Tabs';
 import View1 from './components/View1';
@@ -21,6 +22,11 @@ interface DataWithGeneratedAt {
 }
 
 function App() {
+  // ── Mise à jour dynamique du manifest PWA et des balises iOS ──────────────
+  // Appelé EN PREMIER, avant tous les autres hooks, pour que le manifest
+  // et le titre iOS soient corrigés dès le premier rendu.
+  useDynamicManifest();
+
   const [data, setData] = useState<DataWithGeneratedAt | null>(null);
   const [dataError, setDataError] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<DataSource>('loading');

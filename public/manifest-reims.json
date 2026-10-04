@@ -1,0 +1,26 @@
+{
+  "id": "/reims",
+  "name": "DSNA Delay Dashboard - Reims",
+  "short_name": "Reims",
+  "description": "Tableau de bord opérationnel DSNA pour le suivi des performances de trafic et délais ATFM du REIMS ACC.",
+  "theme_color": "#0b1329",
+  "background_color": "#0b1329",
+  "display": "standalone",
+  "orientation": "any",
+  "scope": "/",
+  "start_url": "/reims",
+  "icons": [
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}
