@@ -8,7 +8,8 @@ Génère traffic_data.json dans racine/src/data/.
 
 NOTE : La répartition par cause des délais N-1 est estimée à partir
 du ratio entre N et N-1 (proportionnelle). Ces valeurs ne sont PAS
-les vraies causes N-1 (non fournies dans les sources).
+les vraies causes N-1 (non fournies dans les sources) et sont
+marquées par isEstimated=True pour que l'UI puisse les distinguer.
 """
 
 import io
@@ -166,8 +167,8 @@ def merge_and_aggregate(traffic_df: pd.DataFrame, delays_df: pd.DataFrame) -> di
 
         total_n = [round(cap_n[i] + wea_n[i] + oth_n[i] + dis_n[i]) for i in range(53)]
 
-        # ⚠️ ESTIMATION : la répartition par cause N-1 n'est PAS fournie
-        # dans les sources Excel. On applique un ratio proportionnel.
+        # ⚠️ ESTIMATION annuelle : la ventilation par cause N-1 n'est PAS
+        # fournie dans les sources Excel. On applique un ratio proportionnel.
         cap_n1, wea_n1, oth_n1, dis_n1 = [], [], [], []
         for i in range(53):
             if total_n[i] > 0:
@@ -193,7 +194,7 @@ def merge_and_aggregate(traffic_df: pd.DataFrame, delays_df: pd.DataFrame) -> di
             "other": oth_n1,
             "disruption": dis_n1,
             "total": [round(v) for v in total_n1],
-            "isEstimated": True,  # Marqueur pour l'UI
+            "isEstimated": True,
         }
 
         weekly = {}
@@ -207,20 +208,35 @@ def merge_and_aggregate(traffic_df: pd.DataFrame, delays_df: pd.DataFrame) -> di
             d_wea = [0.0] * 7
             d_oth = [0.0] * 7
             d_dis = [0.0] * 7
+            d_tot_prev = [0.0] * 7
             d_dat = [""] * 7
 
             for _, row in w_df.iterrows():
                 wd = int(row["DayOfWeek"])
                 if 0 <= wd <= 6:
-                    d_fl[wd] = int(row["Flights"])
-                    d_fl1[wd] = int(row["Flights Previous Year"])
-                    d_cap[wd] = float(row["capacityStaffing"])
-                    d_wea[wd] = float(row["weather"])
-                    d_oth[wd] = float(row["other"])
-                    d_dis[wd] = float(row["disruption"])
-                    d_dat[wd] = row["Day"].strftime("%Y-%m-%d")
+                    d_fl[wd]      = int(row["Flights"])
+                    d_fl1[wd]     = int(row["Flights Previous Year"])
+                    d_cap[wd]     = float(row["capacityStaffing"])
+                    d_wea[wd]     = float(row["weather"])
+                    d_oth[wd]     = float(row["other"])
+                    d_dis[wd]     = float(row["disruption"])
+                    d_tot_prev[wd] = float(row["totalDelayPrev"])
+                    d_dat[wd]     = row["Day"].strftime("%Y-%m-%d")
 
             d_tot = [round(d_cap[i] + d_wea[i] + d_oth[i] + d_dis[i]) for i in range(7)]
+
+            # ⚠️ ESTIMATION hebdo : ventilation N-1 par cause estimée
+            # proportionnellement au total N-1 réel de chaque jour.
+            # `isEstimated=True` permet à l'UI (View4 mode N-1) d'utiliser
+            # uniquement `total` et d'ignorer les causes estimées.
+            d_cap1, d_wea1, d_oth1, d_dis1 = [0] * 7, [0] * 7, [0] * 7, [0] * 7
+            for i in range(7):
+                if d_tot[i] > 0 and d_tot_prev[i] > 0:
+                    ratio = d_tot_prev[i] / d_tot[i]
+                    d_cap1[i] = round(d_cap[i] * ratio)
+                    d_wea1[i] = round(d_wea[i] * ratio)
+                    d_oth1[i] = round(d_oth[i] * ratio)
+                    d_dis1[i] = round(d_dis[i] * ratio)
 
             weekly[str(w_num)] = {
                 "days": DAYS_FR,
@@ -233,6 +249,14 @@ def merge_and_aggregate(traffic_df: pd.DataFrame, delays_df: pd.DataFrame) -> di
                     "other": [round(v) for v in d_oth],
                     "disruption": [round(v) for v in d_dis],
                     "total": d_tot,
+                },
+                "delaysPreviousYear": {
+                    "capacityStaffing": d_cap1,
+                    "weather": d_wea1,
+                    "other": d_oth1,
+                    "disruption": d_dis1,
+                    "total": [round(v) for v in d_tot_prev],  # réel
+                    "isEstimated": True,
                 },
             }
 

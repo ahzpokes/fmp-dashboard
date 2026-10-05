@@ -100,24 +100,77 @@ export const CausesOnlyLegend = ({ currentYear }: CausesOnlyLegendProps) => (
 );
 
 /**
- * Légende pour la Vue 4 : 4 causes S / S-1 + Vols S / S-1
+ * Légende pour la Vue 4.
+ *
+ * - Mode S-1 (prevIsN1=false) : 4 causes S / S-1 + Vols S / S-1
+ * - Mode N-1 (prevIsN1=true)  : Délai TOTAL S / N-1 + Vols S / N-1
+ *   → mêmes couleurs que la Vue 2 (#3b82f6 pour N, #93c5fd pour N-1)
  */
 interface WeeklyLegendProps {
   selectedWeek: number;
+  prevLabel?: string;
+  prevIsN1?: boolean;
+  currentYear?: number;
+  previousYear?: number;
 }
 
-export const WeeklyLegend = ({ selectedWeek }: WeeklyLegendProps) => (
+export const WeeklyLegend = ({
+  selectedWeek,
+  prevLabel = 'S-1',
+  prevIsN1 = false,
+  currentYear,
+  previousYear,
+}: WeeklyLegendProps) => (
   <Container>
-    <Item color="#3b82f6" label="Capacity" />
-    <Item color="#10b981" label="Weather" />
-    <Item color="#f59e0b" label="Other" />
-    <Item color="#ef4444" label="Disruption" />
-    <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
-      (atténué = S{selectedWeek - 1})
-    </span>
-    <Separator />
-    <Item shape="line" color="var(--line-current)" label={`Vols S${selectedWeek}`} />
-    <Item shape="line" dashed color="var(--line-previous)" label={`Vols S${selectedWeek - 1}`} />
+    {prevIsN1 ? (
+      <>
+        <Item
+          color="#3b82f6"
+          label={
+            currentYear
+              ? `Délai total S${selectedWeek} (${currentYear})`
+              : `Délai total S${selectedWeek}`
+          }
+        />
+        <Item
+          color="#93c5fd"
+          label={
+            previousYear
+              ? `Délai total ${previousYear}`
+              : 'Délai total N-1'
+          }
+        />
+        <Separator />
+        <Item
+          shape="line"
+          color="var(--line-current)"
+          label={
+            currentYear
+              ? `Vols S${selectedWeek} (${currentYear})`
+              : `Vols S${selectedWeek}`
+          }
+        />
+        <Item
+          shape="line"
+          dashed
+          color="var(--line-previous)"
+          label={previousYear ? `Vols ${previousYear}` : 'Vols N-1'}
+        />
+      </>
+    ) : (
+      <>
+        <Item color="#3b82f6" label="Capacity" />
+        <Item color="#10b981" label="Weather" />
+        <Item color="#f59e0b" label="Other" />
+        <Item color="#ef4444" label="Disruption" />
+        <span className="text-xs italic" style={{ color: 'var(--text-muted)' }}>
+          (atténué = {prevLabel})
+        </span>
+        <Separator />
+        <Item shape="line" color="var(--line-current)" label={`Vols S${selectedWeek}`} />
+        <Item shape="line" dashed color="var(--line-previous)" label={`Vols S${selectedWeek - 1}`} />
+      </>
+    )}
   </Container>
 );
 

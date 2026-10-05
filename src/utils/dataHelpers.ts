@@ -25,6 +25,12 @@ export interface WeeklyDayData {
   flights: number[];
   flightsPreviousYear: number[];
   delays: DelayCause;
+  /**
+   * N-1 : le `total` est réel, les 4 causes sont estimées (isEstimated=true).
+   * Utilisé tel quel par la plupart des vues ; View4 mode N-1 n'utilise
+   * que `total` pour condenser la comparaison sur le délai global.
+   */
+  delaysPreviousYear?: DelayCause;
 }
 
 export interface WeeklyData {
@@ -59,6 +65,14 @@ export interface WeekData {
     other: (number | null)[];
     disruption: (number | null)[];
     total: (number | null)[];
+  };
+  delaysPreviousYear?: {
+    capacityStaffing: (number | null)[];
+    weather: (number | null)[];
+    other: (number | null)[];
+    disruption: (number | null)[];
+    total: (number | null)[];
+    isEstimated?: boolean;
   };
   lastDayWithData: number;
 }
@@ -107,7 +121,7 @@ export function getLastCompleteWeek(accData: AccData): number {
 
 /**
  * Calcule les séries annuelles pour un ACC
- * NOTE : Les causes N-1 sont estimées à partir du ratio (voir fetch_data.py).
+ * NOTE : Les causes N-1 annuelles sont estimées (voir fetch_data.py).
  */
 export function getAnnualSeries(accData: AccData): AnnualSeries {
   const annual = accData.annual || {};
@@ -127,7 +141,6 @@ export function getAnnualSeries(accData: AccData): AnnualSeries {
 
   const totalDelaysPrev = (annual.totalDelaysPreviousYear || []).map(v => Math.round(v || 0));
 
-  // Utiliser les vraies valeurs N-1 si disponibles, sinon estimation
   const prevDelays = annual.delaysPreviousYear;
   let capacityStaffingPrev, weatherPrev, otherPrev, disruptionPrev;
   if (prevDelays && prevDelays.capacityStaffing) {
@@ -136,7 +149,6 @@ export function getAnnualSeries(accData: AccData): AnnualSeries {
     otherPrev = (prevDelays.other || []).map(v => Math.round(v || 0));
     disruptionPrev = (prevDelays.disruption || []).map(v => Math.round(v || 0));
   } else {
-    // Fallback : estimation (à éviter si possible)
     capacityStaffingPrev = totalDelaysPrev.map(t => Math.round(t * 0.70));
     weatherPrev = totalDelaysPrev.map(t => Math.round(t * 0.20));
     otherPrev = totalDelaysPrev.map(t => Math.round(t * 0.10));
@@ -197,34 +209,53 @@ export function getPieData(data: AccData | WeeklyDayData, year: 'current' | 'pre
   return causeKeys.map((key, i) => ({ name: labels[i], value: totals[i] }));
 }
 
-export function getWeekData(accData: AccData, weekNumber: number): WeekData | null {
+/**
+ * Retourne les données d'une semaine.
+ *
+ * @param year  'current'  → semaine N (vols + délais réels, ventilés par cause)
+ *              'previous' → même semaine ISO de l'année N-1 :
+ *                           vols N-1 réels, causes N-1 estimées
+ *                           (total N-1 = réel).
+ *
+ * La structure retournée est identique dans les deux cas : 4 causes + total.
+ * Les vues qui ne veulent PAS afficher les causes estimées N-1 (View4 mode
+ * N-1) peuvent simplement lire `delays.total` et ignorer les causes.
+ */
+export function getWeekData(
+  accData: AccData,
+  weekNumber: number,
+  year: 'current' | 'previous' = 'current'
+): WeekData | null {
   if (!accData.weekly || !accData.weekly[weekNumber]) return null;
 
   const week = accData.weekly[weekNumber];
-  const flights = week.flights || [];
-  const flightsPrev = week.flightsPreviousYear || [];
-  const delays = week.delays || {};
+  const isPrev = year === 'previous';
+
+  const flights = isPrev ? (week.flightsPreviousYear || []) : (week.flights || []);
+  const flightsOther = isPrev ? (week.flights || []) : (week.flightsPreviousYear || []);
+
+  const delays = isPrev ? (week.delaysPreviousYear || {}) : (week.delays || {});
 
   const cap = (delays.capacityStaffing || []).map(v => Math.round(v || 0));
   const wea = (delays.weather || []).map(v => Math.round(v || 0));
   const oth = (delays.other || []).map(v => Math.round(v || 0));
   const dis = (delays.disruption || []).map(v => Math.round(v || 0));
 
-  const total = cap.map((v, i) => v + (wea[i] || 0) + (oth[i] || 0) + (dis[i] || 0));
+  const total = (delays.total && delays.total.length
+    ? delays.total
+    : cap.map((v, i) => v + (wea[i] || 0) + (oth[i] || 0) + (dis[i] || 0))
+  ).map(v => Math.round(v || 0));
 
   const lastDayWithData = flights.reduce((last, f, idx) => (f > 0 ? idx : last), -1);
 
-  const cleanArray = (arr) =>
-    (arr || []).map((v, i) => {
-      if (i > lastDayWithData) return null;
-      return Math.round(v || 0);
-    });
+  const cleanArray = (arr: (number | null)[] | undefined) =>
+    (arr || []).map((v, i) => (i > lastDayWithData ? null : Math.round(v || 0)));
 
   return {
     days: week.days,
     dates: week.dates,
     flights: cleanArray(flights),
-    flightsPreviousYear: cleanArray(flightsPrev),
+    flightsPreviousYear: cleanArray(flightsOther),
     delays: {
       capacityStaffing: cleanArray(cap),
       weather: cleanArray(wea),
@@ -232,6 +263,17 @@ export function getWeekData(accData: AccData, weekNumber: number): WeekData | nu
       disruption: cleanArray(dis),
       total: cleanArray(total),
     },
+    delaysPreviousYear:
+      !isPrev && week.delaysPreviousYear
+        ? {
+            capacityStaffing: cleanArray(week.delaysPreviousYear.capacityStaffing),
+            weather: cleanArray(week.delaysPreviousYear.weather),
+            other: cleanArray(week.delaysPreviousYear.other),
+            disruption: cleanArray(week.delaysPreviousYear.disruption),
+            total: cleanArray(week.delaysPreviousYear.total),
+            isEstimated: week.delaysPreviousYear.isEstimated,
+          }
+        : undefined,
     lastDayWithData,
   };
 }
