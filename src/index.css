@@ -37,8 +37,9 @@ html.dark {
 }
 
 /* ─── Texte RADIS en mode sombre ─── */
-html.dark .radis-text {
-  color: #f1f5f9;
+html.dark .radis-text,
+html.dark .radis-text-fill {
+  fill: #f1f5f9;
 }
 
 body {

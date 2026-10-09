@@ -333,9 +333,27 @@ const Header = ({
         <div className="flex items-center gap-3 shrink-0">
           <RadisLogo />
 
-          <h1 className="radis-text text-2xl font-bold tracking-wide text-primary">
-            RADIS
-          </h1>
+          <svg
+            viewBox="0 0 680 170"
+            className="radis-text-svg"
+            style={{ width: '120px', height: '30px' }}
+            aria-hidden="true"
+          >
+            <text
+              x="340"
+              y="150"
+              textAnchor="middle"
+              fontFamily="Arial Black, Helvetica, sans-serif"
+              fontSize="170"
+              fontWeight="900"
+              fill="#1B3A5C"
+              textLength="680"
+              lengthAdjust="spacingAndGlyphs"
+              className="radis-text-fill"
+            >
+              RADIS
+            </text>
+          </svg>
         </div>
 
         <select
