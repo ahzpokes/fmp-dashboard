@@ -1,15 +1,205 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="112" fill="#0b1329"/>
-  <!-- Radar concentric circles -->
-  <circle cx="256" cy="256" r="180" fill="none" stroke="#1e293b" stroke-width="6"/>
-  <circle cx="256" cy="256" r="120" fill="none" stroke="#334155" stroke-width="4" stroke-dasharray="8 8"/>
-  <circle cx="256" cy="256" r="60" fill="none" stroke="#475569" stroke-width="3"/>
-  <!-- Crosshair lines -->
-  <line x1="76" y1="256" x2="436" y2="256" stroke="#1e293b" stroke-width="4"/>
-  <line x1="256" y1="76" x2="256" y2="436" stroke="#1e293b" stroke-width="4"/>
-  <!-- Airplane icon -->
-  <path d="M256 120 L280 220 L390 270 L390 300 L280 265 L276 360 L310 390 L310 410 L256 395 L202 410 L202 390 L236 360 L232 265 L122 300 L122 270 L232 220 Z" fill="#f59e0b"/>
-  <!-- Glow dots -->
-  <circle cx="340" cy="180" r="10" fill="#3b82f6"/>
-  <circle cx="160" cy="320" r="8" fill="#10b981"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="70 50 660 660" width="100%" height="100%">
+  <title>Logo RADIS - animation seule</title>
+  <desc>Radis flat design avec ondes radar pulsantes, sans texte.</desc>
+
+  <style>
+    .radar-static {
+      display: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .radar-live {
+        display: none;
+      }
+
+      .radar-static {
+        display: block;
+      }
+    }
+  </style>
+
+  <defs>
+    <linearGradient id="leafOuterL" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1E5C45"/>
+      <stop offset="100%" stop-color="#3D8B6E"/>
+    </linearGradient>
+
+    <linearGradient id="leafInnerL" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3D8B6E"/>
+      <stop offset="100%" stop-color="#6BBF9A"/>
+    </linearGradient>
+
+    <linearGradient id="leafOuterR" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#1E5C45"/>
+      <stop offset="100%" stop-color="#3D8B6E"/>
+    </linearGradient>
+
+    <linearGradient id="leafInnerR" x1="100%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#3D8B6E"/>
+      <stop offset="100%" stop-color="#6BBF9A"/>
+    </linearGradient>
+
+    <radialGradient id="radishBody" cx="40%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#FF7B5A"/>
+      <stop offset="50%" stop-color="#F04A2A"/>
+      <stop offset="100%" stop-color="#D93A20"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ================= ONDES RADAR ================= -->
+  <g class="radar-live" fill="none" stroke="#1B3A5C" stroke-linecap="round">
+
+    <!-- Halo respirant -->
+    <circle cx="400" cy="330" r="118" stroke="#3D8B6E" stroke-width="18" opacity="0.10">
+      <animate
+        attributeName="r"
+        values="112;126;112"
+        dur="5s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keyTimes="0;0.5;1"
+        keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
+      />
+      <animate
+        attributeName="opacity"
+        values="0.07;0.16;0.07"
+        dur="5s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keyTimes="0;0.5;1"
+        keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
+      />
+    </circle>
+
+    <!-- Onde 1 -->
+    <circle cx="400" cy="330" r="118" stroke-width="4" opacity="0">
+      <animate
+        attributeName="r"
+        values="112;208;276"
+        keyTimes="0;0.55;1"
+        dur="4.2s"
+        begin="-0.2s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
+      />
+      <animate
+        attributeName="opacity"
+        values="0;0.40;0"
+        keyTimes="0;0.18;1"
+        dur="4.2s"
+        begin="-0.2s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.3 0 0.4 1;0.35 0 0.6 1"
+      />
+      <animate
+        attributeName="stroke-width"
+        values="4;2.2;1.1"
+        keyTimes="0;0.55;1"
+        dur="4.2s"
+        begin="-0.2s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
+      />
+    </circle>
+
+    <!-- Onde 2 -->
+    <circle cx="400" cy="330" r="118" stroke-width="3.2" opacity="0">
+      <animate
+        attributeName="r"
+        values="112;216;292"
+        keyTimes="0;0.55;1"
+        dur="4.2s"
+        begin="-1.6s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
+      />
+      <animate
+        attributeName="opacity"
+        values="0;0.28;0"
+        keyTimes="0;0.18;1"
+        dur="4.2s"
+        begin="-1.6s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.3 0 0.4 1;0.35 0 0.6 1"
+      />
+      <animate
+        attributeName="stroke-width"
+        values="3.2;1.8;0.9"
+        keyTimes="0;0.55;1"
+        dur="4.2s"
+        begin="-1.6s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
+      />
+    </circle>
+
+    <!-- Onde 3 -->
+    <circle cx="400" cy="330" r="118" stroke-width="2.6" opacity="0">
+      <animate
+        attributeName="r"
+        values="112;224;308"
+        keyTimes="0;0.55;1"
+        dur="4.2s"
+        begin="-3s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
+      />
+      <animate
+        attributeName="opacity"
+        values="0;0.18;0"
+        keyTimes="0;0.18;1"
+        dur="4.2s"
+        begin="-3s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.3 0 0.4 1;0.35 0 0.6 1"
+      />
+      <animate
+        attributeName="stroke-width"
+        values="2.6;1.4;0.75"
+        keyTimes="0;0.55;1"
+        dur="4.2s"
+        begin="-3s"
+        repeatCount="indefinite"
+        calcMode="spline"
+        keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
+      />
+    </circle>
+  </g>
+
+  <!-- Version statique si animations réduites -->
+  <g class="radar-static" fill="none" stroke="#1B3A5C" stroke-linecap="round">
+    <circle cx="400" cy="330" r="190" stroke-width="2" opacity="0.18"/>
+    <circle cx="400" cy="330" r="252" stroke-width="1.5" opacity="0.10"/>
+  </g>
+
+  <!-- ================= FEUILLES ================= -->
+  <g>
+    <path d="M390,350 C300,290 230,180 250,120 C300,160 360,250 395,345 Z" fill="url(#leafOuterL)"/>
+    <path d="M395,348 C340,300 280,210 290,150 C330,190 370,260 398,345 Z" fill="url(#leafInnerL)"/>
+    <path d="M410,350 C500,290 570,180 550,120 C500,160 440,250 405,345 Z" fill="url(#leafOuterR)"/>
+    <path d="M405,348 C460,300 520,210 510,150 C470,190 430,260 402,345 Z" fill="url(#leafInnerR)"/>
+  </g>
+
+  <!-- ================= CORPS DU RADIS ================= -->
+  <path
+    d="M295,350 A105,105 0 0,1 505,350 C505,420 455,480 400,520 C345,480 295,420 295,350 Z"
+    fill="url(#radishBody)"
+  />
+
+  <!-- ================= VISAGE ================= -->
+  <path d="M352,340 Q366,326 380,340" fill="none" stroke="#2D2D2D" stroke-width="7" stroke-linecap="round"/>
+  <path d="M420,340 Q434,326 448,340" fill="none" stroke="#2D2D2D" stroke-width="7" stroke-linecap="round"/>
+
+  <ellipse cx="338" cy="365" rx="14" ry="9" fill="#FF9999" opacity="0.75"/>
+  <ellipse cx="462" cy="365" rx="14" ry="9" fill="#FF9999" opacity="0.75"/>
+
+  <path d="M387,380 Q400,393 413,380" fill="none" stroke="#2D2D2D" stroke-width="6" stroke-linecap="round"/>
 </svg>
