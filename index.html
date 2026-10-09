@@ -45,7 +45,281 @@
       Les couleurs sont gérées par les variables CSS de src/index.css
       pour permettre le toggle Dark/Light sans conflit.
     -->
+    <div id="loading-screen" style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #f1f5f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.5s ease-out;
+    ">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 880" width="100%" height="100%" style="max-width: 400px; max-height: 80vh;">
+        <title>Logo RADIS avec signature</title>
+        <desc>
+          Logo flat design RADIS avec ondes radar pulsantes et signature
+          Réseau - Analyse - Données - Intelligence - Supervision animée.
+        </desc>
+        <style>
+          .radar-static,
+          .tagline-static {
+            display: none;
+          }
+
+          @media (prefers-reduced-motion: reduce) {
+            .radar-live,
+            .tagline-live {
+              display: none;
+            }
+
+            .radar-static,
+            .tagline-static {
+              display: block;
+            }
+          }
+        </style>
+        <defs>
+          <linearGradient id="leafOuterL" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#1E5C45"/>
+            <stop offset="100%" stop-color="#3D8B6E"/>
+          </linearGradient>
+          <linearGradient id="leafInnerL" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#3D8B6E"/>
+            <stop offset="100%" stop-color="#6BBF9A"/>
+          </linearGradient>
+          <linearGradient id="leafOuterR" x1="100%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stop-color="#1E5C45"/>
+            <stop offset="100%" stop-color="#3D8B6E"/>
+          </linearGradient>
+          <linearGradient id="leafInnerR" x1="100%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stop-color="#3D8B6E"/>
+            <stop offset="100%" stop-color="#6BBF9A"/>
+          </linearGradient>
+          <radialGradient id="radishBody" cx="40%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#FF7B5A"/>
+            <stop offset="50%" stop-color="#F04A2A"/>
+            <stop offset="100%" stop-color="#D93A20"/>
+          </radialGradient>
+        </defs>
+
+        <!-- ================= ONDES RADAR ================= -->
+        <g class="radar-live" fill="none" stroke="#1B3A5C" stroke-linecap="round">
+          <!-- Halo respirant -->
+          <circle cx="400" cy="330" r="118" stroke="#3D8B6E" stroke-width="18" opacity="0.10">
+            <animate
+              attributeName="r"
+              values="112;126;112"
+              dur="5s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keyTimes="0;0.5;1"
+              keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
+            />
+            <animate
+              attributeName="opacity"
+              values="0.07;0.16;0.07"
+              dur="5s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keyTimes="0;0.5;1"
+              keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
+            />
+          </circle>
+          <!-- Onde 1 -->
+          <circle cx="400" cy="330" r="118" stroke-width="4" opacity="0">
+            <animate
+              attributeName="r"
+              values="112;208;276"
+              keyTimes="0;0.55;1"
+              dur="4.2s"
+              begin="-0.2s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
+            />
+            <animate
+              attributeName="opacity"
+              values="0;0.40;0"
+              keyTimes="0;0.18;1"
+              dur="4.2s"
+              begin="-0.2s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.3 0 0.4 1;0.35 0 0.6 1"
+            />
+            <animate
+              attributeName="stroke-width"
+              values="4;2.2;1.1"
+              keyTimes="0;0.55;1"
+              dur="4.2s"
+              begin="-0.2s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
+            />
+          </circle>
+          <!-- Onde 2 -->
+          <circle cx="400" cy="330" r="118" stroke-width="3.2" opacity="0">
+            <animate
+              attributeName="r"
+              values="112;216;292"
+              keyTimes="0;0.55;1"
+              dur="4.2s"
+              begin="-1.6s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
+            />
+            <animate
+              attributeName="opacity"
+              values="0;0.28;0"
+              keyTimes="0;0.18;1"
+              dur="4.2s"
+              begin="-1.6s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.3 0 0.4 1;0.35 0 0.6 1"
+            />
+            <animate
+              attributeName="stroke-width"
+              values="3.2;1.8;0.9"
+              keyTimes="0;0.55;1"
+              dur="4.2s"
+              begin="-1.6s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
+            />
+          </circle>
+          <!-- Onde 3 -->
+          <circle cx="400" cy="330" r="118" stroke-width="2.6" opacity="0">
+            <animate
+              attributeName="r"
+              values="112;224;308"
+              keyTimes="0;0.55;1"
+              dur="4.2s"
+              begin="-3s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
+            />
+            <animate
+              attributeName="opacity"
+              values="0;0.18;0"
+              keyTimes="0;0.18;1"
+              dur="4.2s"
+              begin="-3s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.3 0 0.4 1;0.35 0 0.6 1"
+            />
+            <animate
+              attributeName="stroke-width"
+              values="2.6;1.4;0.75"
+              keyTimes="0;0.55;1"
+              dur="4.2s"
+              begin="-3s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
+            />
+          </circle>
+        </g>
+
+        <!-- Version statique si animations réduites -->
+        <g class="radar-static" fill="none" stroke="#1B3A5C" stroke-linecap="round">
+          <circle cx="400" cy="330" r="190" stroke-width="2" opacity="0.18"/>
+          <circle cx="400" cy="330" r="252" stroke-width="1.5" opacity="0.10"/>
+        </g>
+
+        <!-- ================= FEUILLES ================= -->
+        <g>
+          <path d="M390,350 C300,290 230,180 250,120 C300,160 360,250 395,345 Z" fill="url(#leafOuterL)"/>
+          <path d="M395,348 C340,300 280,210 290,150 C330,190 370,260 398,345 Z" fill="url(#leafInnerL)"/>
+          <path d="M410,350 C500,290 570,180 550,120 C500,160 440,250 405,345 Z" fill="url(#leafOuterR)"/>
+          <path d="M405,348 C460,300 520,210 510,150 C470,190 430,260 402,345 Z" fill="url(#leafInnerR)"/>
+        </g>
+
+        <!-- ================= CORPS DU RADIS ================= -->
+        <path
+          d="M295,350 A105,105 0 0,1 505,350 C505,420 455,480 400,520 C345,480 295,420 295,350 Z"
+          fill="url(#radishBody)"
+        />
+
+        <!-- ================= VISAGE ================= -->
+        <path d="M352,340 Q366,326 380,340" fill="none" stroke="#2D2D2D" stroke-width="7" stroke-linecap="round"/>
+        <path d="M420,340 Q434,326 448,340" fill="none" stroke="#2D2D2D" stroke-width="7" stroke-linecap="round"/>
+        <ellipse cx="338" cy="365" rx="14" ry="9" fill="#FF9999" opacity="0.75"/>
+        <ellipse cx="462" cy="365" rx="14" ry="9" fill="#FF9999" opacity="0.75"/>
+        <path d="M387,380 Q400,393 413,380" fill="none" stroke="#2D2D2D" stroke-width="6" stroke-linecap="round"/>
+
+        <!-- ================= NOM PRINCIPAL ================= -->
+        <text
+          x="400"
+          y="780"
+          text-anchor="middle"
+          font-family="Arial Black, Helvetica, sans-serif"
+          font-size="170"
+          font-weight="900"
+          fill="#1B3A5C"
+          textLength="680"
+          lengthAdjust="spacingAndGlyphs"
+        >RADIS</text>
+
+        <!-- ================= SIGNATURE ANIMÉE ================= -->
+        <text
+          class="tagline-live"
+          x="400"
+          y="828"
+          text-anchor="middle"
+          font-family="Arial, Helvetica, sans-serif"
+          font-size="22"
+          font-weight="700"
+          fill="#1B3A5C"
+          letter-spacing="0.2"
+          textLength="660"
+          lengthAdjust="spacingAndGlyphs"
+        ><tspan fill-opacity="0">Réseau<animate attributeName="fill-opacity" values="0;1" dur="0.65s" begin="0.7s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.3 0 0.2 1"/></tspan><tspan fill="#3D8B6E" fill-opacity="0">&#160;&#183;&#160;<animate attributeName="fill-opacity" values="0;1" dur="0.65s" begin="1.35s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.3 0 0.2 1"/></tspan><tspan fill-opacity="0">Analyse<animate attributeName="fill-opacity" values="0;1" dur="0.65s" begin="1.35s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.3 0 0.2 1"/></tspan><tspan fill="#3D8B6E" fill-opacity="0">&#160;&#183;&#160;<animate attributeName="fill-opacity" values="0;1" dur="0.65s" begin="2s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.3 0 0.2 1"/></tspan><tspan fill-opacity="0">Données<animate attributeName="fill-opacity" values="0;1" dur="0.65s" begin="2s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.3 0 0.2 1"/></tspan><tspan fill="#3D8B6E" fill-opacity="0">&#160;&#183;&#160;<animate attributeName="fill-opacity" values="0;1" dur="0.65s" begin="2.65s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.3 0 0.2 1"/></tspan><tspan fill-opacity="0">Intelligence<animate attributeName="fill-opacity" values="0;1" dur="0.65s" begin="2.65s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.3 0 0.2 1"/></tspan><tspan fill="#3D8B6E" fill-opacity="0">&#160;&#183;&#160;<animate attributeName="fill-opacity" values="0;1" dur="0.65s" begin="3.3s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.3 0 0.2 1"/></tspan><tspan fill-opacity="0">Supervision<animate attributeName="fill-opacity" values="0;1" dur="0.65s" begin="3.3s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.3 0 0.2 1"/></tspan></text>
+
+        <!-- Version statique de la signature si animations réduites -->
+        <text
+          class="tagline-static"
+          x="400"
+          y="828"
+          text-anchor="middle"
+          font-family="Arial, Helvetica, sans-serif"
+          font-size="22"
+          font-weight="700"
+          fill="#1B3A5C"
+          letter-spacing="0.2"
+          textLength="660"
+          lengthAdjust="spacingAndGlyphs"
+        >Réseau&#160;&#183;&#160;Analyse&#160;&#183;&#160;Données&#160;&#183;&#160;Intelligence&#160;&#183;&#160;Supervision</text>
+      </svg>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      // Masquer l'écran de chargement après l'animation complète (4 secondes)
+      window.addEventListener('load', () => {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+          setTimeout(() => {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => {
+              loadingScreen.style.display = 'none';
+              document.body.style.overflow = '';
+            }, 500);
+          }, 4000);
+        }
+      });
+
+      // Empêcher le scroll pendant le chargement
+      document.body.style.overflow = 'hidden';
+    </script>
   </body>
 </html>

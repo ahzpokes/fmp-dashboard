@@ -1,0 +1,227 @@
+/* ============================================
+   LOGO RADIS - VERSION SANS TEXTE
+   ============================================ */
+
+:root {
+  --radis-size: 72px;
+  --radis-transition: 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --radis-focus-color: #1B3A5C;
+}
+
+/* Conteneur principal */
+.radis-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--radis-size);
+  height: var(--radis-size);
+  line-height: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Que le logo soit intégré avec <img> ou <svg> inline */
+.radis-logo img,
+.radis-logo svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* ============================================
+   TAILLES
+   ============================================ */
+
+.radis-logo--xs {
+  --radis-size: 32px;
+}
+
+.radis-logo--sm {
+  --radis-size: 48px;
+}
+
+.radis-logo--md {
+  --radis-size: 72px;
+}
+
+.radis-logo--lg {
+  --radis-size: 104px;
+}
+
+.radis-logo--xl {
+  --radis-size: 144px;
+}
+
+/* ============================================
+   CONTEXTES DASHBOARD
+   ============================================ */
+
+/* Header */
+.radis-logo--header {
+  --radis-size: 44px;
+}
+
+/* Sidebar */
+.radis-logo--sidebar {
+  --radis-size: 38px;
+}
+
+/* Écran d'accueil / login / hero */
+.radis-logo--hero {
+  --radis-size: 128px;
+}
+
+/* Centré dans une zone */
+.radis-logo--center {
+  display: flex;
+  margin-inline: auto;
+}
+
+/* ============================================
+   INTERACTION
+   ============================================ */
+
+.radis-logo--interactive {
+  cursor: pointer;
+  transition: transform var(--radis-transition);
+}
+
+.radis-logo--interactive:hover {
+  transform: scale(1.05);
+}
+
+.radis-logo--interactive:active {
+  transform: scale(0.97);
+}
+
+.radis-logo--interactive:focus-visible {
+  outline: 2px solid var(--radis-focus-color);
+  outline-offset: 4px;
+  border-radius: 16px;
+}
+
+/* ============================================
+   ACCESSIBILITÉ
+   ============================================ */
+
+/*
+  Ceci fonctionne seulement si le SVG est inline
+  dans le HTML. Si tu utilises <img src="...">,
+  le CSS ne peut pas cibler l'intérieur du SVG.
+*/
+.radis-logo .radar-static {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radis-logo--interactive {
+    transition: none;
+  }
+
+  .radis-logo--interactive:hover,
+  .radis-logo--interactive:active {
+    transform: none;
+  }
+
+  .radis-logo .radar-live {
+    display: none;
+  }
+
+  .radis-logo .radar-static {
+    display: block;
+  }
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+
+/*
+  Optionnel : si ton dashboard est sombre et que
+  les couleurs du logo deviennent trop foncées.
+*/
+@media (prefers-color-scheme: dark) {
+  .radis-logo--dark-adapt img,
+  .radis-logo--dark-adapt svg {
+    filter: brightness(1.2) saturate(0.95);
+  }
+}
+
+/* ============================================
+   LOGO INLINE HEADER - RADAR
+   ============================================ */
+
+.radis-logo-inline {
+  --logo-wave: #1B3A5C;
+  --logo-halo: #f1f5f9;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  line-height: 0;
+  flex-shrink: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.radis-logo-inline--header {
+  width: 56px;
+  height: 56px;
+  align-self: center;
+  transform: translateY(2px);
+}
+
+.radis-logo-inline-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+/* Couleur des ondes */
+.radis-logo-inline .radar-wave {
+  stroke: var(--logo-wave);
+}
+
+.radis-logo-inline .radar-halo {
+  stroke: var(--logo-halo);
+}
+
+/* Version statique cachée par défaut */
+.radis-logo-inline .radar-static {
+  display: none;
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+
+html.dark .radis-logo-inline {
+  --logo-wave: #9CC4EA;
+  --logo-halo: #7FD3AC;
+}
+
+html.dark .radis-logo-inline .radis-leaves {
+  filter: brightness(1.15);
+}
+
+html.dark .radis-logo-inline .radis-body {
+  filter: brightness(1.03);
+}
+
+/* ============================================
+   ACCESSIBILITÉ - REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .radis-logo-inline .radar-live {
+    display: none;
+  }
+
+  .radis-logo-inline .radar-static {
+    display: inline;
+  }
+}

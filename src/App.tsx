@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Header from './components/Header';
 import { useDynamicManifest } from './hooks/useDynamicManifest';
 import KPIGlobal from './components/KPIGlobal';
@@ -17,7 +17,7 @@ type DataSource = 'remote' | 'local' | 'loading';
 type Theme = 'light' | 'dark';
 
 interface DataWithGeneratedAt {
-  [key: string]: AccData | string;
+  [key: string]: AccData | string | undefined;
   generated_at?: string;
 }
 
@@ -128,7 +128,7 @@ function App() {
     const weekNum = getLastCompleteWeek(accData);
     const weekData = getWeekData(accData, weekNum);
     if (weekData && weekData.dates && weekData.dates.length === 7) {
-      const formatDate = (d) => {
+      const formatDate = (d: string) => {
         const date = new Date(d);
         return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
       };
@@ -168,7 +168,7 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="p-6 max-w-screen-2xl mx-auto w-full flex-1 flex flex-col">
+      <div className="pt-4 px-6 pb-6 max-w-screen-2xl mx-auto w-full flex-1 flex flex-col">
         <Header
           selectedAcc={selectedAcc}
           setSelectedAcc={setSelectedAcc}
@@ -195,7 +195,7 @@ function App() {
           <View2 data={accData} />
           <View3 data={accData} />
           <View4 data={accData} />
-          <View5 data={data} />
+          <View5 data={data as Record<string, AccData>} />
         </Tabs>
 
         <Footer />

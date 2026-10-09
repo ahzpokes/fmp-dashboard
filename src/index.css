@@ -36,6 +36,11 @@ html.dark {
   --line-previous: #a78bfa;
 }
 
+/* ─── Texte RADIS en mode sombre ─── */
+html.dark .radis-text {
+  color: #f1f5f9;
+}
+
 body {
   background-color: var(--bg-page);
   color: var(--text-primary);
