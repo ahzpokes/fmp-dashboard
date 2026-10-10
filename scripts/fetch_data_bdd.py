@@ -7,8 +7,10 @@ journalières par ACC dans la table `daily_acc_data` hébergée sur Nhost.
 Ce script fonctionne en parallèle du script principal `fetch_data.py`
 qui continue à générer le JSON pour le dashboard.
 
-Les données sont insérées avec un UPSERT (ON CONFLICT) : relancer
-le script ne crée pas de doublons, il met à jour les lignes existantes.
+Protection anti-corruption :
+  - UPSERT avec protection sur les colonnes critiques (flights, delay_total,
+    flights_prev_year, delay_total_prev_year). Une valeur existante n'est
+    JAMAIS écrasée par un 0 provenant d'un fichier source corrompu.
 """
 
 import io
@@ -48,7 +50,7 @@ def fetch_file(url: str) -> io.BytesIO:
 
 
 # ─────────────────────────────────────────────────────────────
-# PARSING TRAFIC (identique à fetch_data.py)
+# PARSING TRAFIC
 # ─────────────────────────────────────────────────────────────
 def parse_traffic(excel_bytes: io.BytesIO) -> pd.DataFrame:
     xl = pd.ExcelFile(excel_bytes)
@@ -80,7 +82,7 @@ def parse_traffic(excel_bytes: io.BytesIO) -> pd.DataFrame:
 
 
 # ─────────────────────────────────────────────────────────────
-# PARSING DÉLAIS (identique à fetch_data.py)
+# PARSING DÉLAIS
 # ─────────────────────────────────────────────────────────────
 def parse_delays(excel_bytes: io.BytesIO) -> pd.DataFrame:
     xl = pd.ExcelFile(excel_bytes)
@@ -184,12 +186,18 @@ def build_rows(traffic_df: pd.DataFrame, delays_df: pd.DataFrame) -> list[tuple]
 
 
 # ─────────────────────────────────────────────────────────────
-# INSERTION DANS NHOST
+# INSERTION DANS NHOST (avec protection anti-corruption)
 # ─────────────────────────────────────────────────────────────
 def upsert_to_nhost(rows: list[tuple]) -> None:
     """
     Insère les lignes dans la table daily_acc_data.
-    Si (date, acc_code) existe déjà, met à jour les valeurs.
+
+    Si (date, acc_code) existe déjà :
+      - Les colonnes critiques (flights, delay_total, flights_prev_year,
+        delay_total_prev_year) ne sont PAS écrasées par un 0. On conserve
+        l'ancienne valeur si la nouvelle est 0 (protection contre un
+        fichier source corrompu).
+      - Les autres colonnes sont mises à jour normalement.
     """
     if not rows:
         print("   ⚠️  Aucune ligne à insérer.")
@@ -213,14 +221,32 @@ def upsert_to_nhost(rows: list[tuple]) -> None:
                     week = EXCLUDED.week,
                     day_of_week = EXCLUDED.day_of_week,
                     acc_short = EXCLUDED.acc_short,
-                    flights = EXCLUDED.flights,
-                    flights_prev_year = EXCLUDED.flights_prev_year,
+
+                    -- Colonnes critiques : jamais écraser une valeur par 0
+                    flights = CASE
+                        WHEN EXCLUDED.flights > 0 THEN EXCLUDED.flights
+                        ELSE daily_acc_data.flights
+                    END,
+                    flights_prev_year = CASE
+                        WHEN EXCLUDED.flights_prev_year > 0 THEN EXCLUDED.flights_prev_year
+                        ELSE daily_acc_data.flights_prev_year
+                    END,
+                    delay_total = CASE
+                        WHEN EXCLUDED.delay_total > 0 THEN EXCLUDED.delay_total
+                        ELSE daily_acc_data.delay_total
+                    END,
+                    delay_total_prev_year = CASE
+                        WHEN EXCLUDED.delay_total_prev_year > 0 THEN EXCLUDED.delay_total_prev_year
+                        ELSE daily_acc_data.delay_total_prev_year
+                    END,
+
+                    -- Colonnes non critiques : mises à jour normalement
+                    -- (un 0 est une valeur légitime pour ces causes)
                     delay_capacity_staffing = EXCLUDED.delay_capacity_staffing,
                     delay_weather = EXCLUDED.delay_weather,
                     delay_other = EXCLUDED.delay_other,
                     delay_disruption = EXCLUDED.delay_disruption,
-                    delay_total = EXCLUDED.delay_total,
-                    delay_total_prev_year = EXCLUDED.delay_total_prev_year,
+
                     updated_at = NOW()
             """
             execute_values(cur, sql, rows, page_size=500)
@@ -261,7 +287,7 @@ def main():
     rows = build_rows(traffic_df, delays_df)
     print(f"   ✅ {len(rows):,} lignes prêtes pour insertion")
 
-    print("\n💾 [4/4] UPSERT dans Nhost...")
+    print("\n💾 [4/4] UPSERT dans Nhost (avec protection anti-corruption)...")
     upsert_to_nhost(rows)
 
     print(f"\n✅ Opération terminée à {datetime.now().isoformat()}")
