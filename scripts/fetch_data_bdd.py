@@ -8,9 +8,12 @@ Ce script fonctionne en parallèle du script principal `fetch_data.py`
 qui continue à générer le JSON pour le dashboard.
 
 Protection anti-corruption :
-  - UPSERT avec protection sur les colonnes critiques (flights, delay_total,
-    flights_prev_year, delay_total_prev_year). Une valeur existante n'est
-    JAMAIS écrasée par un 0 provenant d'un fichier source corrompu.
+  - UPSERT avec protection sur les colonnes critiques (flights, delay_total).
+    Une valeur existante n'est JAMAIS écrasée par un 0 provenant d'un
+    fichier source corrompu.
+
+Note : les colonnes prev_year (N-1) ne sont PLUS stockées. La comparaison
+N-1 se fera par JOIN sur la date à partir de 2027.
 """
 
 import io
@@ -30,7 +33,6 @@ from psycopg2.extras import execute_values
 URL_TRAFFIC = "https://www.eurocontrol.int/Economics/Download/ACCs.xlsx"
 URL_DELAYS  = "https://www.eurocontrol.int/Economics/Download/ACC_ATFM_Delay.xlsx"
 
-# La chaîne de connexion est lue depuis les variables d'environnement
 NHOST_DB_URL = os.environ.get("NHOST_DB_URL")
 
 
@@ -73,12 +75,7 @@ def parse_traffic(excel_bytes: io.BytesIO) -> pd.DataFrame:
     fl_col = "Flights" if "Flights" in df.columns else df.columns[4]
     df["Flights"] = pd.to_numeric(df[fl_col], errors="coerce").fillna(0)
 
-    py_col = "Flights Previous Year" if "Flights Previous Year" in df.columns else None
-    df["Flights Previous Year"] = (
-        pd.to_numeric(df[py_col], errors="coerce").fillna(0) if py_col else 0
-    )
-
-    return df[["Entity", "Day", "Week", "DayOfWeek", "Year", "Flights", "Flights Previous Year"]]
+    return df[["Entity", "Day", "Week", "DayOfWeek", "Year", "Flights"]]
 
 
 # ─────────────────────────────────────────────────────────────
@@ -130,14 +127,8 @@ def parse_delays(excel_bytes: io.BytesIO) -> pd.DataFrame:
 
     df["totalDelay"] = df["capacityStaffing"] + df["weather"] + df["other"] + df["disruption"]
 
-    prev_col = "En-route ATFM delay (prev year)"
-    if prev_col in df.columns:
-        df["totalDelayPrev"] = pd.to_numeric(df[prev_col], errors="coerce").fillna(0)
-    else:
-        df["totalDelayPrev"] = 0.0
-
     return df[["Entity", "Day", "capacityStaffing", "weather", "other",
-               "disruption", "totalDelay", "totalDelayPrev"]]
+               "disruption", "totalDelay"]]
 
 
 # ─────────────────────────────────────────────────────────────
@@ -156,13 +147,11 @@ def build_rows(traffic_df: pd.DataFrame, delays_df: pd.DataFrame) -> list[tuple]
     merged = traffic_curr.merge(delays_df, on=["Entity", "Day"], how="left")
     merged = merged.drop_duplicates(subset=["Entity", "Day"])
 
-    for col in ["capacityStaffing", "weather", "other", "disruption",
-                "totalDelay", "totalDelayPrev"]:
+    for col in ["capacityStaffing", "weather", "other", "disruption", "totalDelay"]:
         merged[col] = merged[col].fillna(0)
 
     rows: list[tuple] = []
     for _, r in merged.iterrows():
-        # acc_short : nom court sans " ACC"
         acc_short = r["Entity"].replace(" ACC", "").strip()
 
         rows.append((
@@ -173,31 +162,24 @@ def build_rows(traffic_df: pd.DataFrame, delays_df: pd.DataFrame) -> list[tuple]
             r["Entity"],               # acc_code
             acc_short,                 # acc_short
             int(r["Flights"]),         # flights
-            int(r["Flights Previous Year"]),  # flights_prev_year
             int(round(r["capacityStaffing"])),  # delay_capacity_staffing
             int(round(r["weather"])),           # delay_weather
             int(round(r["other"])),             # delay_other
             int(round(r["disruption"])),        # delay_disruption
             int(round(r["totalDelay"])),        # delay_total
-            int(round(r["totalDelayPrev"])),    # delay_total_prev_year
         ))
 
     return rows
 
 
 # ─────────────────────────────────────────────────────────────
-# INSERTION DANS NHOST (avec protection anti-corruption)
+# INSERTION DANS NHOST
 # ─────────────────────────────────────────────────────────────
 def upsert_to_nhost(rows: list[tuple]) -> None:
     """
     Insère les lignes dans la table daily_acc_data.
-
-    Si (date, acc_code) existe déjà :
-      - Les colonnes critiques (flights, delay_total, flights_prev_year,
-        delay_total_prev_year) ne sont PAS écrasées par un 0. On conserve
-        l'ancienne valeur si la nouvelle est 0 (protection contre un
-        fichier source corrompu).
-      - Les autres colonnes sont mises à jour normalement.
+    Protection anti-corruption : flights et delay_total ne sont
+    jamais écrasés par un 0.
     """
     if not rows:
         print("   ⚠️  Aucune ligne à insérer.")
@@ -211,10 +193,10 @@ def upsert_to_nhost(rows: list[tuple]) -> None:
                 INSERT INTO daily_acc_data (
                     date, year, week, day_of_week,
                     acc_code, acc_short,
-                    flights, flights_prev_year,
+                    flights,
                     delay_capacity_staffing, delay_weather,
                     delay_other, delay_disruption,
-                    delay_total, delay_total_prev_year
+                    delay_total
                 ) VALUES %s
                 ON CONFLICT (date, acc_code) DO UPDATE SET
                     year = EXCLUDED.year,
@@ -227,21 +209,12 @@ def upsert_to_nhost(rows: list[tuple]) -> None:
                         WHEN EXCLUDED.flights > 0 THEN EXCLUDED.flights
                         ELSE daily_acc_data.flights
                     END,
-                    flights_prev_year = CASE
-                        WHEN EXCLUDED.flights_prev_year > 0 THEN EXCLUDED.flights_prev_year
-                        ELSE daily_acc_data.flights_prev_year
-                    END,
                     delay_total = CASE
                         WHEN EXCLUDED.delay_total > 0 THEN EXCLUDED.delay_total
                         ELSE daily_acc_data.delay_total
                     END,
-                    delay_total_prev_year = CASE
-                        WHEN EXCLUDED.delay_total_prev_year > 0 THEN EXCLUDED.delay_total_prev_year
-                        ELSE daily_acc_data.delay_total_prev_year
-                    END,
 
                     -- Colonnes non critiques : mises à jour normalement
-                    -- (un 0 est une valeur légitime pour ces causes)
                     delay_capacity_staffing = EXCLUDED.delay_capacity_staffing,
                     delay_weather = EXCLUDED.delay_weather,
                     delay_other = EXCLUDED.delay_other,
@@ -270,7 +243,6 @@ def main():
 
     if not NHOST_DB_URL:
         print("❌ Variable d'environnement NHOST_DB_URL manquante.")
-        print("   Définissez-la avant de lancer le script.")
         sys.exit(1)
 
     print("\n📊 [1/4] Trafic (ACCs.xlsx)...")
@@ -287,7 +259,7 @@ def main():
     rows = build_rows(traffic_df, delays_df)
     print(f"   ✅ {len(rows):,} lignes prêtes pour insertion")
 
-    print("\n💾 [4/4] UPSERT dans Nhost (avec protection anti-corruption)...")
+    print("\n💾 [4/4] UPSERT dans Nhost...")
     upsert_to_nhost(rows)
 
     print(f"\n✅ Opération terminée à {datetime.now().isoformat()}")
