@@ -11,7 +11,7 @@ import View5 from './components/View5';
 import Footer from './components/Footer';
 import { getLastCompleteWeek, getWeekData, type AccData } from './utils/dataHelpers';
 import { FRENCH_ACC, slugToAcc, accToSlug } from './utils/theme';
-import { DATA_URL } from './config';
+import { loadAllAccData } from './data/dataSource';
 
 type DataSource = 'remote' | 'local' | 'loading';
 type Theme = 'light' | 'dark';
@@ -31,22 +31,19 @@ function App() {
   const [dataError, setDataError] = useState<string | null>(null);
   const [dataSource, setDataSource] = useState<DataSource>('loading');
 
-  // ─── Charge les données depuis jsDelivr avec cache-buster + fallback local ───
+  // ─── Charge tous les ACCs depuis Nhost en une requête GraphQL ─────────────
   useEffect(() => {
     let cancelled = false;
 
     const loadData = async () => {
       try {
-        // Cache-buster : timestamp unique pour forcer le navigateur à ignorer son cache.
-        // Combiné à la purge jsDelivr côté CI, cela garantit des données fraîches.
-        const cacheBuster = `?t=${Date.now()}`;
-        const res = await fetch(`${DATA_URL}${cacheBuster}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
-        if (!cancelled) {
-          setData(json);
-          setDataSource('remote');
-        }
+        const { accs, generatedAt } = await loadAllAccData();
+
+        if (cancelled) return;
+
+        const merged: DataWithGeneratedAt = { ...accs, generated_at: generatedAt };
+        setData(merged);
+        setDataSource('remote');
       } catch (err: any) {
         console.warn('Fallback local :', err.message);
         try {
@@ -116,7 +113,7 @@ function App() {
   // Données de l'ACC sélectionné (null si data pas encore chargé)
   const accData: AccData | null = data ? (data[selectedAcc] as AccData) : null;
 
-  // Date de mise à jour (extraite du JSON)
+  // Date de mise à jour (extraite des données Nhost)
   const lastUpdate = useMemo(() => {
     if (data?.generated_at) return new Date(data.generated_at);
     return new Date();

@@ -8,16 +8,8 @@ export default defineConfig({
     VitePWA({
       /*
        * Stratégie d'injection du Service Worker :
-       * On utilise "injectManifest" pour garder le contrôle total sur le SW
-       * et éviter que vite-plugin-pwa génère et écrase les 5 manifests statiques
-       * placés dans public/.
-       *
-       * Le fichier src/sw.ts est le Service Worker source ; Vite y injectera
-       * automatiquement la liste des assets à précacher (precache manifest).
-       *
-       * Si tu n'as pas encore de src/sw.ts, garde la stratégie "generateSW"
-       * ci-dessous et remplace simplement `manifest: false` pour empêcher
-       * la génération du manifest automatique.
+       * On utilise "generateSW" pour laisser vite-plugin-pwa générer le SW.
+       * Les 5 manifests statiques placés dans public/ sont servis tels quels.
        */
       strategies: 'generateSW',
       registerType: 'autoUpdate',
@@ -41,23 +33,27 @@ export default defineConfig({
         globIgnores: ['manifest-*.json'],
         runtimeCaching: [
           {
-            // Cache réseau-d'abord pour les données jsDelivr (trafic_data.json)
-            urlPattern: /^https:\/\/cdn\.jsdelivr\.net\/gh\/.*\/traffic_data\.json/,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'eurocontrol-data-cache',
-              expiration: {
-                maxEntries: 5,
-                maxAgeSeconds: 86400 * 7, // 7 jours
-              },
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
+            /*
+             * API GraphQL Nhost (endpoint Hasura) : TOUJOURS aller sur le réseau.
+             * Aucun cache → les données sont toujours fraîches.
+             * Corrige le problème de cache qui bloquait les mises à jour.
+             */
+            urlPattern: /^https:\/\/.*\.hasura\..*\.nhost\.run\/v1\/graphql/,
+            handler: 'NetworkOnly',
           },
           {
-            // Cache réseau-d'abord pour les manifests PWA dynamiques
-            // Permet l'accès offline tout en récupérant les mises à jour
+            /*
+             * API GraphQL Nhost (endpoint alternatif) : même comportement.
+             * Ceinture et bretelles si Nhost change d'URL à l'avenir.
+             */
+            urlPattern: /^https:\/\/.*\.graphql\..*\.nhost\.run\/v1/,
+            handler: 'NetworkOnly',
+          },
+          {
+            /*
+             * Cache réseau-d'abord pour les manifests PWA dynamiques.
+             * Permet l'accès offline tout en récupérant les mises à jour.
+             */
             urlPattern: /\/manifest-\w+\.json$/,
             handler: 'NetworkFirst',
             options: {
