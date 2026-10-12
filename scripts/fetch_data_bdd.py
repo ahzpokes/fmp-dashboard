@@ -8,12 +8,13 @@ Ce script fonctionne en parallèle du script principal `fetch_data.py`
 qui continue à générer le JSON pour le dashboard.
 
 Protection anti-corruption :
-  - UPSERT avec protection sur les colonnes critiques (flights, delay_total).
-    Une valeur existante n'est JAMAIS écrasée par un 0 provenant d'un
-    fichier source corrompu.
+  - UPSERT avec protection sur les colonnes critiques (flights, delay_total,
+    flights_prev_year, delay_total_prev_year). Une valeur existante n'est
+    JAMAIS écrasée par un 0 provenant d'un fichier source corrompu.
 
-Note : les colonnes prev_year (N-1) ne sont PLUS stockées. La comparaison
-N-1 se fera par JOIN sur la date à partir de 2027.
+Note : les colonnes prev_year sont TEMPORAIRES. Elles seront supprimées
+fin 2027 quand la BDD aura 2 années complètes et que la comparaison
+N-1 pourra se faire par JOIN.
 """
 
 import io
@@ -75,7 +76,13 @@ def parse_traffic(excel_bytes: io.BytesIO) -> pd.DataFrame:
     fl_col = "Flights" if "Flights" in df.columns else df.columns[4]
     df["Flights"] = pd.to_numeric(df[fl_col], errors="coerce").fillna(0)
 
-    return df[["Entity", "Day", "Week", "DayOfWeek", "Year", "Flights"]]
+    py_col = "Flights Previous Year" if "Flights Previous Year" in df.columns else None
+    df["Flights Previous Year"] = (
+        pd.to_numeric(df[py_col], errors="coerce").fillna(0) if py_col else 0
+    )
+
+    return df[["Entity", "Day", "Week", "DayOfWeek", "Year",
+               "Flights", "Flights Previous Year"]]
 
 
 # ─────────────────────────────────────────────────────────────
@@ -127,17 +134,20 @@ def parse_delays(excel_bytes: io.BytesIO) -> pd.DataFrame:
 
     df["totalDelay"] = df["capacityStaffing"] + df["weather"] + df["other"] + df["disruption"]
 
+    prev_col = "En-route ATFM delay (prev year)"
+    if prev_col in df.columns:
+        df["totalDelayPrev"] = pd.to_numeric(df[prev_col], errors="coerce").fillna(0)
+    else:
+        df["totalDelayPrev"] = 0.0
+
     return df[["Entity", "Day", "capacityStaffing", "weather", "other",
-               "disruption", "totalDelay"]]
+               "disruption", "totalDelay", "totalDelayPrev"]]
 
 
 # ─────────────────────────────────────────────────────────────
 # PRÉPARATION DES DONNÉES POUR INSERTION
 # ─────────────────────────────────────────────────────────────
 def build_rows(traffic_df: pd.DataFrame, delays_df: pd.DataFrame) -> list[tuple]:
-    """
-    Fusionne trafic + délais et prépare la liste de tuples à insérer.
-    """
     current_year = traffic_df["Year"].max()
     print(f"   📅 Année courante détectée : {current_year}")
 
@@ -147,7 +157,8 @@ def build_rows(traffic_df: pd.DataFrame, delays_df: pd.DataFrame) -> list[tuple]
     merged = traffic_curr.merge(delays_df, on=["Entity", "Day"], how="left")
     merged = merged.drop_duplicates(subset=["Entity", "Day"])
 
-    for col in ["capacityStaffing", "weather", "other", "disruption", "totalDelay"]:
+    for col in ["capacityStaffing", "weather", "other", "disruption",
+                "totalDelay", "totalDelayPrev"]:
         merged[col] = merged[col].fillna(0)
 
     rows: list[tuple] = []
@@ -162,25 +173,22 @@ def build_rows(traffic_df: pd.DataFrame, delays_df: pd.DataFrame) -> list[tuple]
             r["Entity"],               # acc_code
             acc_short,                 # acc_short
             int(r["Flights"]),         # flights
+            int(r["Flights Previous Year"]),  # flights_prev_year
             int(round(r["capacityStaffing"])),  # delay_capacity_staffing
             int(round(r["weather"])),           # delay_weather
             int(round(r["other"])),             # delay_other
             int(round(r["disruption"])),        # delay_disruption
             int(round(r["totalDelay"])),        # delay_total
+            int(round(r["totalDelayPrev"])),    # delay_total_prev_year
         ))
 
     return rows
 
 
 # ─────────────────────────────────────────────────────────────
-# INSERTION DANS NHOST
+# INSERTION DANS NHOST (avec protection anti-corruption)
 # ─────────────────────────────────────────────────────────────
 def upsert_to_nhost(rows: list[tuple]) -> None:
-    """
-    Insère les lignes dans la table daily_acc_data.
-    Protection anti-corruption : flights et delay_total ne sont
-    jamais écrasés par un 0.
-    """
     if not rows:
         print("   ⚠️  Aucune ligne à insérer.")
         return
@@ -193,10 +201,10 @@ def upsert_to_nhost(rows: list[tuple]) -> None:
                 INSERT INTO daily_acc_data (
                     date, year, week, day_of_week,
                     acc_code, acc_short,
-                    flights,
+                    flights, flights_prev_year,
                     delay_capacity_staffing, delay_weather,
                     delay_other, delay_disruption,
-                    delay_total
+                    delay_total, delay_total_prev_year
                 ) VALUES %s
                 ON CONFLICT (date, acc_code) DO UPDATE SET
                     year = EXCLUDED.year,
@@ -209,9 +217,17 @@ def upsert_to_nhost(rows: list[tuple]) -> None:
                         WHEN EXCLUDED.flights > 0 THEN EXCLUDED.flights
                         ELSE daily_acc_data.flights
                     END,
+                    flights_prev_year = CASE
+                        WHEN EXCLUDED.flights_prev_year > 0 THEN EXCLUDED.flights_prev_year
+                        ELSE daily_acc_data.flights_prev_year
+                    END,
                     delay_total = CASE
                         WHEN EXCLUDED.delay_total > 0 THEN EXCLUDED.delay_total
                         ELSE daily_acc_data.delay_total
+                    END,
+                    delay_total_prev_year = CASE
+                        WHEN EXCLUDED.delay_total_prev_year > 0 THEN EXCLUDED.delay_total_prev_year
+                        ELSE daily_acc_data.delay_total_prev_year
                     END,
 
                     -- Colonnes non critiques : mises à jour normalement
@@ -259,7 +275,7 @@ def main():
     rows = build_rows(traffic_df, delays_df)
     print(f"   ✅ {len(rows):,} lignes prêtes pour insertion")
 
-    print("\n💾 [4/4] UPSERT dans Nhost...")
+    print("\n💾 [4/4] UPSERT dans Nhost (avec protection anti-corruption)...")
     upsert_to_nhost(rows)
 
     print(f"\n✅ Opération terminée à {datetime.now().isoformat()}")
