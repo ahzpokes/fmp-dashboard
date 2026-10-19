@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="70 50 660 660" width="100%" height="100%">
+  <title>Logo RADIS - animation seule</title>
+  <desc>Radis flat design avec ondes radar pulsantes, sans texte.</desc>
+
+  <style>
+    .radar-static {
+      display: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .radar-live {
+        display: none;
+      }
+
+      .radar-static {
+        display: block;
+      }
+    }
+  </style>
+
+  <defs>
+    <!-- Nouveau gradient rose pour le corps -->
+    <radialGradient id="radishBody" cx="40%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#FF8FAB"/>
+      <stop offset="50%" stop-color="#F25287"/>
+      <stop offset="100%" stop-color="#D63B64"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ================= ONDES RADAR ================= -->
+  <g class="radar-live" fill="none" stroke="#1B3A5C" stroke-linecap="round">
+    <!-- Halo respirant -->
+    <circle cx="400" cy="330" r="118" stroke="#3D8B6E" stroke-width="18" opacity="0.10">
+      <animate attributeName="r" values="112;126;112" dur="5s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.42 0 0.58 1;0.42 0 0.58 1" />
+      <animate attributeName="opacity" values="0.07;0.16;0.07" dur="5s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.42 0 0.58 1;0.42 0 0.58 1" />
+    </circle>
+
+    <!-- Onde 1 -->
+    <circle cx="400" cy="330" r="118" stroke-width="4" opacity="0">
+      <animate attributeName="r" values="112;208;276" keyTimes="0;0.55;1" dur="4.2s" begin="-0.2s" repeatCount="indefinite" calcMode="spline" keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1" />
+      <animate attributeName="opacity" values="0;0.40;0" keyTimes="0;0.18;1" dur="4.2s" begin="-0.2s" repeatCount="indefinite" calcMode="spline" keySplines="0.3 0 0.4 1;0.35 0 0.6 1" />
+      <animate attributeName="stroke-width" values="4;2.2;1.1" keyTimes="0;0.55;1" dur="4.2s" begin="-0.2s" repeatCount="indefinite" calcMode="spline" keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1" />
+    </circle>
+
+    <!-- Onde 2 -->
+    <circle cx="400" cy="330" r="118" stroke-width="3.2" opacity="0">
+      <animate attributeName="r" values="112;216;292" keyTimes="0;0.55;1" dur="4.2s" begin="-1.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1" />
+      <animate attributeName="opacity" values="0;0.28;0" keyTimes="0;0.18;1" dur="4.2s" begin="-1.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.3 0 0.4 1;0.35 0 0.6 1" />
+      <animate attributeName="stroke-width" values="3.2;1.8;0.9" keyTimes="0;0.55;1" dur="4.2s" begin="-1.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1" />
+    </circle>
+
+    <!-- Onde 3 -->
+    <circle cx="400" cy="330" r="118" stroke-width="2.6" opacity="0">
+      <animate attributeName="r" values="112;224;308" keyTimes="0;0.55;1" dur="4.2s" begin="-3s" repeatCount="indefinite" calcMode="spline" keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1" />
+      <animate attributeName="opacity" values="0;0.18;0" keyTimes="0;0.18;1" dur="4.2s" begin="-3s" repeatCount="indefinite" calcMode="spline" keySplines="0.3 0 0.4 1;0.35 0 0.6 1" />
+      <animate attributeName="stroke-width" values="2.6;1.4;0.75" keyTimes="0;0.55;1" dur="4.2s" begin="-3s" repeatCount="indefinite" calcMode="spline" keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1" />
+    </circle>
+  </g>
+
+  <!-- Version statique si animations réduites -->
+  <g class="radar-static" fill="none" stroke="#1B3A5C" stroke-linecap="round">
+    <circle cx="400" cy="330" r="190" stroke-width="2" opacity="0.18"/>
+    <circle cx="400" cy="330" r="252" stroke-width="1.5" opacity="0.10"/>
+  </g>
+
+  <!-- ================= TIGES ================= -->
+  <g stroke="#1E6B4A" stroke-width="14" stroke-linecap="round" fill="none">
+    <path d="M 390 350 Q 370 300 350 260" />
+    <path d="M 400 350 L 400 260" />
+    <path d="M 410 350 Q 430 300 450 260" />
+  </g>
+
+  <!-- ================= FEUILLES ================= -->
+  <g stroke="#1E6B4A" stroke-width="10" stroke-linejoin="round" fill="#6BCF8D">
+    <!-- Feuille gauche -->
+    <path d="M 385 350 C 320 310 260 260 220 220 C 200 200 220 170 250 180 C 240 150 260 120 290 130 C 300 90 340 100 340 140 C 370 130 380 180 350 210 C 380 260 390 300 385 350 Z" />
+    <!-- Feuille centrale -->
+    <path d="M 395 350 C 380 300 360 240 350 200 C 330 190 320 150 350 150 C 350 100 380 80 400 90 C 420 80 450 100 450 150 C 480 150 470 190 450 200 C 440 240 420 300 405 350 Z" />
+    <!-- Feuille droite -->
+    <path d="M 415 350 C 480 310 540 260 580 220 C 600 200 580 170 550 180 C 560 150 540 120 510 130 C 500 90 460 100 460 140 C 430 130 420 180 450 210 C 420 260 410 300 415 350 Z" />
+  </g>
+
+  <!-- Nervures des feuilles -->
+  <g stroke="#A8EDC2" stroke-width="6" stroke-linecap="round" fill="none">
+    <path d="M 380 340 Q 300 260 260 180" />
+    <path d="M 400 340 L 400 110" />
+    <path d="M 420 340 Q 500 260 540 180" />
+  </g>
+
+  <!-- ================= CORPS DU RADIS ================= -->
+  <path
+    d="M295,350 A105,105 0 0,1 505,350 C505,430 455,490 400,520 C345,490 295,430 295,350 Z"
+    fill="url(#radishBody)"
+  />
+
+  <!-- ================= VISAGE ================= -->
+  <!-- Yeux -->
+  <ellipse cx="365" cy="345" rx="12" ry="18" fill="#1A1A1A"/>
+  <ellipse cx="435" cy="345" rx="12" ry="18" fill="#1A1A1A"/>
+
+  <!-- Joues roses -->
+  <ellipse cx="330" cy="375" rx="20" ry="12" fill="#FF8BA7" opacity="0.9"/>
+  <ellipse cx="470" cy="375" rx="20" ry="12" fill="#FF8BA7" opacity="0.9"/>
+
+  <!-- Sourire -->
+  <path d="M380,385 Q400,405 420,385" fill="none" stroke="#1A1A1A" stroke-width="8" stroke-linecap="round"/>
+</svg>

@@ -19,158 +19,41 @@
   </style>
 
   <defs>
-    <linearGradient id="leafOuterL" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#1E5C45"/>
-      <stop offset="100%" stop-color="#3D8B6E"/>
-    </linearGradient>
-
-    <linearGradient id="leafInnerL" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#3D8B6E"/>
-      <stop offset="100%" stop-color="#6BBF9A"/>
-    </linearGradient>
-
-    <linearGradient id="leafOuterR" x1="100%" y1="100%" x2="0%" y2="0%">
-      <stop offset="0%" stop-color="#1E5C45"/>
-      <stop offset="100%" stop-color="#3D8B6E"/>
-    </linearGradient>
-
-    <linearGradient id="leafInnerR" x1="100%" y1="100%" x2="0%" y2="0%">
-      <stop offset="0%" stop-color="#3D8B6E"/>
-      <stop offset="100%" stop-color="#6BBF9A"/>
-    </linearGradient>
-
+    <!-- Nouveau gradient rose pour le corps -->
     <radialGradient id="radishBody" cx="40%" cy="30%" r="70%">
-      <stop offset="0%" stop-color="#FF7B5A"/>
-      <stop offset="50%" stop-color="#F04A2A"/>
-      <stop offset="100%" stop-color="#D93A20"/>
+      <stop offset="0%" stop-color="#FF8FAB"/>
+      <stop offset="50%" stop-color="#F25287"/>
+      <stop offset="100%" stop-color="#D63B64"/>
     </radialGradient>
   </defs>
 
   <!-- ================= ONDES RADAR ================= -->
   <g class="radar-live" fill="none" stroke="#1B3A5C" stroke-linecap="round">
-
     <!-- Halo respirant -->
     <circle cx="400" cy="330" r="118" stroke="#3D8B6E" stroke-width="18" opacity="0.10">
-      <animate
-        attributeName="r"
-        values="112;126;112"
-        dur="5s"
-        repeatCount="indefinite"
-        calcMode="spline"
-        keyTimes="0;0.5;1"
-        keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
-      />
-      <animate
-        attributeName="opacity"
-        values="0.07;0.16;0.07"
-        dur="5s"
-        repeatCount="indefinite"
-        calcMode="spline"
-        keyTimes="0;0.5;1"
-        keySplines="0.42 0 0.58 1;0.42 0 0.58 1"
-      />
+      <animate attributeName="r" values="112;126;112" dur="5s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.42 0 0.58 1;0.42 0 0.58 1" />
+      <animate attributeName="opacity" values="0.07;0.16;0.07" dur="5s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.42 0 0.58 1;0.42 0 0.58 1" />
     </circle>
 
     <!-- Onde 1 -->
     <circle cx="400" cy="330" r="118" stroke-width="4" opacity="0">
-      <animate
-        attributeName="r"
-        values="112;208;276"
-        keyTimes="0;0.55;1"
-        dur="4.2s"
-        begin="-0.2s"
-        repeatCount="indefinite"
-        calcMode="spline"
-        keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
-      />
-      <animate
-        attributeName="opacity"
-        values="0;0.40;0"
-        keyTimes="0;0.18;1"
-        dur="4.2s"
-        begin="-0.2s"
-        repeatCount="indefinite"
-        calcMode="spline"
-        keySplines="0.3 0 0.4 1;0.35 0 0.6 1"
-      />
-      <animate
-        attributeName="stroke-width"
-        values="4;2.2;1.1"
-        keyTimes="0;0.55;1"
-        dur="4.2s"
-        begin="-0.2s"
-        repeatCount="indefinite"
-        calcMode="spline"
-        keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
-      />
+      <animate attributeName="r" values="112;208;276" keyTimes="0;0.55;1" dur="4.2s" begin="-0.2s" repeatCount="indefinite" calcMode="spline" keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1" />
+      <animate attributeName="opacity" values="0;0.40;0" keyTimes="0;0.18;1" dur="4.2s" begin="-0.2s" repeatCount="indefinite" calcMode="spline" keySplines="0.3 0 0.4 1;0.35 0 0.6 1" />
+      <animate attributeName="stroke-width" values="4;2.2;1.1" keyTimes="0;0.55;1" dur="4.2s" begin="-0.2s" repeatCount="indefinite" calcMode="spline" keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1" />
     </circle>
 
     <!-- Onde 2 -->
     <circle cx="400" cy="330" r="118" stroke-width="3.2" opacity="0">
-      <animate
-        attributeName="r"
-        values="112;216;292"
-        keyTimes="0;0.55;1"
-        dur="4.2s"
-        begin="-1.6s"
-        repeatCount="indefinite"
-        calcMode="spline"
-        keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
-      />
-      <animate
-        attributeName="opacity"
-        values="0;0.28;0"
-        keyTimes="0;0.18;1"
-        dur="4.2s"
-        begin="-1.6s"
-        repeatCount="indefinite"
-        calcMode="spline"
-        keySplines="0.3 0 0.4 1;0.35 0 0.6 1"
-      />
-      <animate
-        attributeName="stroke-width"
-        values="3.2;1.8;0.9"
-        keyTimes="0;0.55;1"
-        dur="4.2s"
-        begin="-1.6s"
-        repeatCount="indefinite"
-        calcMode="spline"
-        keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
-      />
+      <animate attributeName="r" values="112;216;292" keyTimes="0;0.55;1" dur="4.2s" begin="-1.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1" />
+      <animate attributeName="opacity" values="0;0.28;0" keyTimes="0;0.18;1" dur="4.2s" begin="-1.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.3 0 0.4 1;0.35 0 0.6 1" />
+      <animate attributeName="stroke-width" values="3.2;1.8;0.9" keyTimes="0;0.55;1" dur="4.2s" begin="-1.6s" repeatCount="indefinite" calcMode="spline" keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1" />
     </circle>
 
     <!-- Onde 3 -->
     <circle cx="400" cy="330" r="118" stroke-width="2.6" opacity="0">
-      <animate
-        attributeName="r"
-        values="112;224;308"
-        keyTimes="0;0.55;1"
-        dur="4.2s"
-        begin="-3s"
-        repeatCount="indefinite"
-        calcMode="spline"
-        keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
-      />
-      <animate
-        attributeName="opacity"
-        values="0;0.18;0"
-        keyTimes="0;0.18;1"
-        dur="4.2s"
-        begin="-3s"
-        repeatCount="indefinite"
-        calcMode="spline"
-        keySplines="0.3 0 0.4 1;0.35 0 0.6 1"
-      />
-      <animate
-        attributeName="stroke-width"
-        values="2.6;1.4;0.75"
-        keyTimes="0;0.55;1"
-        dur="4.2s"
-        begin="-3s"
-        repeatCount="indefinite"
-        calcMode="spline"
-        keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1"
-      />
+      <animate attributeName="r" values="112;224;308" keyTimes="0;0.55;1" dur="4.2s" begin="-3s" repeatCount="indefinite" calcMode="spline" keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1" />
+      <animate attributeName="opacity" values="0;0.18;0" keyTimes="0;0.18;1" dur="4.2s" begin="-3s" repeatCount="indefinite" calcMode="spline" keySplines="0.3 0 0.4 1;0.35 0 0.6 1" />
+      <animate attributeName="stroke-width" values="2.6;1.4;0.75" keyTimes="0;0.55;1" dur="4.2s" begin="-3s" repeatCount="indefinite" calcMode="spline" keySplines="0.16 0.66 0.3 1;0.32 0 0.55 1" />
     </circle>
   </g>
 
@@ -180,26 +63,45 @@
     <circle cx="400" cy="330" r="252" stroke-width="1.5" opacity="0.10"/>
   </g>
 
+  <!-- ================= TIGES ================= -->
+  <g stroke="#1E6B4A" stroke-width="14" stroke-linecap="round" fill="none">
+    <path d="M 390 350 Q 370 300 350 260" />
+    <path d="M 400 350 L 400 260" />
+    <path d="M 410 350 Q 430 300 450 260" />
+  </g>
+
   <!-- ================= FEUILLES ================= -->
-  <g>
-    <path d="M390,350 C300,290 230,180 250,120 C300,160 360,250 395,345 Z" fill="url(#leafOuterL)"/>
-    <path d="M395,348 C340,300 280,210 290,150 C330,190 370,260 398,345 Z" fill="url(#leafInnerL)"/>
-    <path d="M410,350 C500,290 570,180 550,120 C500,160 440,250 405,345 Z" fill="url(#leafOuterR)"/>
-    <path d="M405,348 C460,300 520,210 510,150 C470,190 430,260 402,345 Z" fill="url(#leafInnerR)"/>
+  <g stroke="#1E6B4A" stroke-width="10" stroke-linejoin="round" fill="#6BCF8D">
+    <!-- Feuille gauche -->
+    <path d="M 385 350 C 320 310 260 260 220 220 C 200 200 220 170 250 180 C 240 150 260 120 290 130 C 300 90 340 100 340 140 C 370 130 380 180 350 210 C 380 260 390 300 385 350 Z" />
+    <!-- Feuille centrale -->
+    <path d="M 395 350 C 380 300 360 240 350 200 C 330 190 320 150 350 150 C 350 100 380 80 400 90 C 420 80 450 100 450 150 C 480 150 470 190 450 200 C 440 240 420 300 405 350 Z" />
+    <!-- Feuille droite -->
+    <path d="M 415 350 C 480 310 540 260 580 220 C 600 200 580 170 550 180 C 560 150 540 120 510 130 C 500 90 460 100 460 140 C 430 130 420 180 450 210 C 420 260 410 300 415 350 Z" />
+  </g>
+
+  <!-- Nervures des feuilles -->
+  <g stroke="#A8EDC2" stroke-width="6" stroke-linecap="round" fill="none">
+    <path d="M 380 340 Q 300 260 260 180" />
+    <path d="M 400 340 L 400 110" />
+    <path d="M 420 340 Q 500 260 540 180" />
   </g>
 
   <!-- ================= CORPS DU RADIS ================= -->
   <path
-    d="M295,350 A105,105 0 0,1 505,350 C505,420 455,480 400,520 C345,480 295,420 295,350 Z"
+    d="M295,350 A105,105 0 0,1 505,350 C505,430 455,490 400,520 C345,490 295,430 295,350 Z"
     fill="url(#radishBody)"
   />
 
   <!-- ================= VISAGE ================= -->
-  <path d="M352,340 Q366,326 380,340" fill="none" stroke="#2D2D2D" stroke-width="7" stroke-linecap="round"/>
-  <path d="M420,340 Q434,326 448,340" fill="none" stroke="#2D2D2D" stroke-width="7" stroke-linecap="round"/>
+  <!-- Yeux -->
+  <ellipse cx="365" cy="345" rx="12" ry="18" fill="#1A1A1A"/>
+  <ellipse cx="435" cy="345" rx="12" ry="18" fill="#1A1A1A"/>
 
-  <ellipse cx="338" cy="365" rx="14" ry="9" fill="#FF9999" opacity="0.75"/>
-  <ellipse cx="462" cy="365" rx="14" ry="9" fill="#FF9999" opacity="0.75"/>
+  <!-- Joues roses -->
+  <ellipse cx="330" cy="375" rx="20" ry="12" fill="#FF8BA7" opacity="0.9"/>
+  <ellipse cx="470" cy="375" rx="20" ry="12" fill="#FF8BA7" opacity="0.9"/>
 
-  <path d="M387,380 Q400,393 413,380" fill="none" stroke="#2D2D2D" stroke-width="6" stroke-linecap="round"/>
+  <!-- Sourire -->
+  <path d="M380,385 Q400,405 420,385" fill="none" stroke="#1A1A1A" stroke-width="8" stroke-linecap="round"/>
 </svg>

@@ -54,6 +54,6 @@ export function useDynamicManifest(): void {
     }
 
     // ── 3. Mise à jour du <title> de la page ──────────────────────────────
-    document.title = `DSNA Delay Dashboard - ${shortName}`;
+    document.title = `RADIS - ${shortName}`;
   }, []); // Tableau vide : s'exécute une seule fois au montage
 }
