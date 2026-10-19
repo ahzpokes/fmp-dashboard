@@ -94,7 +94,7 @@ const Header = ({
           )}
 
           {otherAccs.length > 0 && (
-            <optgroup label="Autres ACC Européens">
+            <optgroup label="Eurocontrol ACC">
               {otherAccs.map((acc) => (
                 <option key={acc} value={acc}>
                   {acc}
