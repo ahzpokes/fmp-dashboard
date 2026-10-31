@@ -8,9 +8,11 @@ Ce script fonctionne en parallèle du script principal `fetch_data.py`
 qui continue à générer le JSON pour le dashboard.
 
 Protection anti-corruption :
-  - UPSERT avec protection sur les colonnes critiques (flights, delay_total,
-    flights_prev_year, delay_total_prev_year). Une valeur existante n'est
-    JAMAIS écrasée par un 0 provenant d'un fichier source corrompu.
+  - UPSERT avec protection sur TOUTES les colonnes critiques :
+      flights, flights_prev_year, delay_total, delay_total_prev_year,
+      ET les 4 causes de délai (capacityStaffing, weather, other, disruption).
+    Une valeur existante n'est JAMAIS écrasée par un 0 provenant
+    d'un fichier source corrompu.
 
 Note : les colonnes prev_year sont TEMPORAIRES. Elles seront supprimées
 fin 2027 quand la BDD aura 2 années complètes et que la comparaison
@@ -212,7 +214,13 @@ def upsert_to_nhost(rows: list[tuple]) -> None:
                     day_of_week = EXCLUDED.day_of_week,
                     acc_short = EXCLUDED.acc_short,
 
-                    -- Colonnes critiques : jamais écraser une valeur par 0
+                    -- ══════════════════════════════════════════════
+                    -- PROTECTION ANTI-CORRUPTION
+                    -- Aucune valeur existante > 0 ne peut être écrasée
+                    -- par un 0 provenant d'un fichier source tronqué.
+                    -- ══════════════════════════════════════════════
+
+                    -- Colonnes critiques : trafic
                     flights = CASE
                         WHEN EXCLUDED.flights > 0 THEN EXCLUDED.flights
                         ELSE daily_acc_data.flights
@@ -221,6 +229,8 @@ def upsert_to_nhost(rows: list[tuple]) -> None:
                         WHEN EXCLUDED.flights_prev_year > 0 THEN EXCLUDED.flights_prev_year
                         ELSE daily_acc_data.flights_prev_year
                     END,
+
+                    -- Colonnes critiques : délais totaux
                     delay_total = CASE
                         WHEN EXCLUDED.delay_total > 0 THEN EXCLUDED.delay_total
                         ELSE daily_acc_data.delay_total
@@ -230,11 +240,23 @@ def upsert_to_nhost(rows: list[tuple]) -> None:
                         ELSE daily_acc_data.delay_total_prev_year
                     END,
 
-                    -- Colonnes non critiques : mises à jour normalement
-                    delay_capacity_staffing = EXCLUDED.delay_capacity_staffing,
-                    delay_weather = EXCLUDED.delay_weather,
-                    delay_other = EXCLUDED.delay_other,
-                    delay_disruption = EXCLUDED.delay_disruption,
+                    -- Colonnes critiques : causes de délai (NOUVEAU)
+                    delay_capacity_staffing = CASE
+                        WHEN EXCLUDED.delay_capacity_staffing > 0 THEN EXCLUDED.delay_capacity_staffing
+                        ELSE daily_acc_data.delay_capacity_staffing
+                    END,
+                    delay_weather = CASE
+                        WHEN EXCLUDED.delay_weather > 0 THEN EXCLUDED.delay_weather
+                        ELSE daily_acc_data.delay_weather
+                    END,
+                    delay_other = CASE
+                        WHEN EXCLUDED.delay_other > 0 THEN EXCLUDED.delay_other
+                        ELSE daily_acc_data.delay_other
+                    END,
+                    delay_disruption = CASE
+                        WHEN EXCLUDED.delay_disruption > 0 THEN EXCLUDED.delay_disruption
+                        ELSE daily_acc_data.delay_disruption
+                    END,
 
                     updated_at = NOW()
             """
