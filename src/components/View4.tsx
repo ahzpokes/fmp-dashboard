@@ -3,7 +3,7 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   BarChart, PieChart, Pie, Cell, ReferenceLine
 } from 'recharts';
-import { getWeekData, getLastWeekWithData, computeWeekKPIs, type AccData } from '../utils/dataHelpers';
+import { getWeekData, getLastWeekWithData, computeWeekKPIs, getIsoYear, type AccData } from '../utils/dataHelpers';
 import { CAUSE_COLORS, CAUSE_COLORS_PREV } from '../utils/theme';
 import { WeeklyLegend } from './ChartLegends';
 
@@ -185,9 +185,10 @@ const View4 = ({ data, isActive }: View4Props) => {
   const currentYear = useMemo(() => {
     const dates = weekData?.dates || [];
     const thursday = dates[3];
-    if (thursday) return new Date(thursday).getFullYear();
-    if (dates[0]) return new Date(dates[0]).getFullYear();
-    return new Date().getFullYear();
+    if (thursday) return getIsoYear(thursday);
+    const firstValid = dates.find(Boolean);
+    if (firstValid) return getIsoYear(firstValid);
+    return getIsoYear();
   }, [weekData]);
 
   const previousYear = currentYear - 1;
@@ -298,17 +299,17 @@ const View4 = ({ data, isActive }: View4Props) => {
   const yLeftTicks = Array.from({ length: yLeftMax / 500 + 1 }, (_, i) => i * 500);
 
   const totalsS = {
-    capacity: weekData.delays.capacityStaffing?.reduce((a, b) => a + (b || 0), 0) || 0,
-    weather: weekData.delays.weather?.reduce((a, b) => a + (b || 0), 0) || 0,
-    other: weekData.delays.other?.reduce((a, b) => a + (b || 0), 0) || 0,
-    disruption: weekData.delays.disruption?.reduce((a, b) => a + (b || 0), 0) || 0,
+    capacity: weekData.delays.capacityStaffing?.reduce((a: number, b) => a + (b || 0), 0) || 0,
+    weather: weekData.delays.weather?.reduce((a: number, b) => a + (b || 0), 0) || 0,
+    other: weekData.delays.other?.reduce((a: number, b) => a + (b || 0), 0) || 0,
+    disruption: weekData.delays.disruption?.reduce((a: number, b) => a + (b || 0), 0) || 0,
   };
 
   const totalsS1 = weekPrevData ? {
-    capacity: weekPrevData.delays.capacityStaffing?.reduce((a, b) => a + (b || 0), 0) || 0,
-    weather: weekPrevData.delays.weather?.reduce((a, b) => a + (b || 0), 0) || 0,
-    other: weekPrevData.delays.other?.reduce((a, b) => a + (b || 0), 0) || 0,
-    disruption: weekPrevData.delays.disruption?.reduce((a, b) => a + (b || 0), 0) || 0,
+    capacity: weekPrevData.delays.capacityStaffing?.reduce((a: number, b) => a + (b || 0), 0) || 0,
+    weather: weekPrevData.delays.weather?.reduce((a: number, b) => a + (b || 0), 0) || 0,
+    other: weekPrevData.delays.other?.reduce((a: number, b) => a + (b || 0), 0) || 0,
+    disruption: weekPrevData.delays.disruption?.reduce((a: number, b) => a + (b || 0), 0) || 0,
   } : { capacity: 0, weather: 0, other: 0, disruption: 0 };
 
   const grandTotalS = Object.values(totalsS).reduce((a, b) => a + b, 0) || 1;

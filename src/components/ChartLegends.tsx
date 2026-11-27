@@ -88,7 +88,7 @@ interface CausesOnlyLegendProps {
   currentYear: number;
 }
 
-export const CausesOnlyLegend = ({ currentYear }: CausesOnlyLegendProps) => (
+export const CausesOnlyLegend = (_props: CausesOnlyLegendProps) => (
   <Container>
     <Item color="#3b82f6" label="Capacity/Staffing" />
     <Item color="#10b981" label="Weather" />

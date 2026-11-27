@@ -1,4 +1,3 @@
-import React from 'react';
 import { computeAnnualKPIs, getLastCompleteWeek, type AccData } from '../utils/dataHelpers';
 
 interface TrendBadgeProps {
@@ -32,8 +31,8 @@ interface KPIGlobalProps {
 const KPIGlobal = ({ data }: KPIGlobalProps) => {
   const maxWeek = getLastCompleteWeek(data);
   const {
-    flights, flightsPrev, totalDelay, totalDelayPrev,
-    avgDelay, avgDelayPrev, flightsPct, delayPct, avgDelayPct,
+    flights, totalDelay,
+    avgDelay, flightsPct, delayPct, avgDelayPct,
     lastWeekWithData,
   } = computeAnnualKPIs(data, maxWeek);
 

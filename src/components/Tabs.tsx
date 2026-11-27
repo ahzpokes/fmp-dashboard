@@ -1,14 +1,16 @@
 import React, { useState, ReactNode } from 'react';
+import { getDefaultDataIsoYear } from '../utils/dataHelpers';
 
 interface TabsProps {
   children: ReactNode;
   showDsnaTab?: boolean;
+  currentYear?: number;
 }
 
-const Tabs = ({ children, showDsnaTab = true }: TabsProps) => {
+const Tabs = ({ children, showDsnaTab = true, currentYear: propYear }: TabsProps) => {
   const [activeTab, setActiveTab] = useState('view1');
 
-  const currentYear = new Date().getFullYear();
+  const currentYear = propYear ?? getDefaultDataIsoYear();
   const previousYear = currentYear - 1;
 
   const tabs = [
@@ -49,7 +51,9 @@ const Tabs = ({ children, showDsnaTab = true }: TabsProps) => {
           const isActive = activeTab === tabId;
           return (
             <div key={tabId} className={isActive ? 'block' : 'hidden'}>
-              {React.cloneElement(child, { isActive })}
+              {React.isValidElement<{ isActive?: boolean }>(child)
+                ? React.cloneElement(child, { isActive })
+                : child}
             </div>
           );
         })}

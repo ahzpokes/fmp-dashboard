@@ -1,6 +1,4 @@
-import React from 'react';
-
-type PeriodOption = '4w' | '12w' | 'year';
+export type PeriodOption = '4w' | '12w' | 'year';
 
 const OPTIONS: { id: PeriodOption; label: string }[] = [
   { id: '4w', label: '4 sem' },

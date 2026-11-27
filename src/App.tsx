@@ -9,7 +9,12 @@ import View3 from './components/View3';
 import View4 from './components/View4';
 import View5 from './components/View5';
 import Footer from './components/Footer';
-import { getLastCompleteWeek, getWeekData, type AccData } from './utils/dataHelpers';
+import {
+  getLastCompleteWeek,
+  getWeekData,
+  getDataIsoYear,
+  type AccData,
+} from './utils/dataHelpers';
 import { FRENCH_ACC, slugToAcc, accToSlug } from './utils/theme';
 import { loadAllAccData } from './data/dataSource';
 
@@ -124,14 +129,18 @@ function App() {
     if (!accData) return '';
     const weekNum = getLastCompleteWeek(accData);
     const weekData = getWeekData(accData, weekNum);
-    if (weekData && weekData.dates && weekData.dates.length === 7) {
+    const validDates = (weekData?.dates || []).filter(Boolean);
+    if (validDates.length > 0) {
       const formatDate = (d: string) => {
-        const date = new Date(d);
+        const date = new Date(d.includes('T') ? d : `${d}T00:00:00`);
+        if (isNaN(date.getTime())) return '';
         return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}`;
       };
-      const start = formatDate(weekData.dates[0]);
-      const end = formatDate(weekData.dates[6]);
-      return `Semaine ${weekNum} (${start} - ${end})`;
+      const start = formatDate(validDates[0]);
+      const end = formatDate(validDates[validDates.length - 1]);
+      if (start && end) {
+        return `Semaine ${weekNum} (${start} - ${end})`;
+      }
     }
     return `Semaine ${weekNum}`;
   }, [accData]);
@@ -162,6 +171,7 @@ function App() {
   }
 
   const isDsnaAcc = FRENCH_ACC.includes(selectedAcc);
+  const dataYear = getDataIsoYear(accData);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -187,7 +197,7 @@ function App() {
 
         <KPIGlobal data={accData} />
 
-        <Tabs showDsnaTab={isDsnaAcc}>
+        <Tabs showDsnaTab={isDsnaAcc} currentYear={dataYear}>
           <View1 data={accData} />
           <View2 data={accData} />
           <View3 data={accData} />

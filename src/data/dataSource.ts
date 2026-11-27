@@ -6,7 +6,13 @@
  */
 
 import { graphqlRequest } from '../nhost';
-import type { AccData, AnnualData, WeeklyData, DelayCause } from '../utils/dataHelpers';
+import {
+  getDefaultDataIsoYear,
+  type AccData,
+  type AnnualData,
+  type WeeklyData,
+  type DelayCause,
+} from '../utils/dataHelpers';
 
 // ─────────────────────────────────────────────────────────────
 // Types bruts GraphQL
@@ -189,10 +195,18 @@ export interface LoadAllResult {
  * Retourne un objet { [accCode]: AccData } + la date de mise à jour.
  */
 export async function loadAllAccData(
-  year: number = new Date().getFullYear()
+  year: number = getDefaultDataIsoYear()
 ): Promise<LoadAllResult> {
   const result = await graphqlRequest<GraphQLResponse>(GET_ALL_ACC_DATA, { year });
-  const rows = result.daily_acc_data ?? [];
+  let rows = result.daily_acc_data ?? [];
+
+  // Repli sur l'année ISO précédente si la nouvelle année ISO vient de démarrer sans données
+  if (rows.length === 0) {
+    const prevResult = await graphqlRequest<GraphQLResponse>(GET_ALL_ACC_DATA, { year: year - 1 });
+    if ((prevResult.daily_acc_data ?? []).length > 0) {
+      rows = prevResult.daily_acc_data;
+    }
+  }
 
   // Grouper les lignes par ACC
   const grouped: Record<string, RawDailyRow[]> = {};

@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { getAnnualSeries, getLastCompleteWeek, type AccData } from '../utils/dataHelpers';
+import { getAnnualSeries, getLastCompleteWeek, getDataIsoYear, type AccData } from '../utils/dataHelpers';
 import { TrafficAndDelayLegend } from './ChartLegends';
-import PeriodToggle from './PeriodToggle';
+import PeriodToggle, { type PeriodOption } from './PeriodToggle';
 
 const formatNumber = (value: number | undefined | null): string => {
   if (value === undefined || value === null) return '';
@@ -22,15 +22,15 @@ interface CustomChartTooltipProps {
   active?: boolean;
   payload?: any[];
   label?: string;
+  currentYear: number;
 }
 
-const CustomChartTooltip = ({ active, payload, label }: CustomChartTooltipProps) => {
+const CustomChartTooltip = ({ active, payload, label, currentYear }: CustomChartTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
-  const currentYear = new Date().getFullYear();
   const previousYear = currentYear - 1;
 
-  const valueMap = {};
+  const valueMap: Record<string, number> = {};
   payload.forEach(entry => { valueMap[entry.dataKey] = entry.value; });
 
   const delayN = valueMap[`Délai ${currentYear}`] ?? 0;
@@ -72,13 +72,13 @@ interface View2Props {
 }
 
 const View2 = ({ data, isActive }: View2Props) => {
-  const currentYear = new Date().getFullYear();
+  const currentYear = getDataIsoYear(data);
   const previousYear = currentYear - 1;
 
   const { weeks, flights, flightsPrev, totalDelays, totalDelaysPrev } = getAnnualSeries(data);
   const lastWeekWithData = getLastCompleteWeek(data);
 
-  const [period, setPeriod] = useState('12w');
+  const [period, setPeriod] = useState<PeriodOption>('12w');
 
   useEffect(() => {
     if (isActive) {
@@ -212,7 +212,7 @@ const View2 = ({ data, isActive }: View2Props) => {
               tickFormatter={formatCompact}
               width={60}
             />
-            <Tooltip content={<CustomChartTooltip />} cursor={false} />
+            <Tooltip content={<CustomChartTooltip currentYear={currentYear} />} cursor={false} />
             <Legend content={<TrafficAndDelayLegend currentYear={currentYear} previousYear={previousYear} />} />
 
             <Bar yAxisId="left" dataKey={`Délai ${currentYear}`} fill="#3b82f6" />

@@ -47,7 +47,7 @@ export const FRENCH_ACC = [
  * Mapping slug d'URL ↔ nom d'ACC
  * Utilisé pour le routage par chemin (/reims, /brest, etc.)
  */
-export const ACC_SLUGS = {
+export const ACC_SLUGS: Record<string, string> = {
   'brest': 'BREST ACC',
   'bordeaux': 'BORDEAUX ACC',
   'marseille': 'MARSEILLE ACC',
@@ -55,12 +55,12 @@ export const ACC_SLUGS = {
   'paris': 'PARIS ACC',
 };
 
-export const slugToAcc = (slug) => {
+export const slugToAcc = (slug: string): string | null => {
   if (!slug) return null;
   return ACC_SLUGS[slug.toLowerCase()] || null;
 };
 
-export const accToSlug = (acc) => {
+export const accToSlug = (acc: string): string => {
   const found = Object.keys(ACC_SLUGS).find(k => ACC_SLUGS[k] === acc);
   return found || 'reims';
 };

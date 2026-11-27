@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ReferenceLine, Cell
 } from 'recharts';
-import { getAnnualSeries, getLastCompleteWeek, computeAnnualKPIs, type AccData } from '../utils/dataHelpers';
+import { getAnnualSeries, getLastCompleteWeek, computeAnnualKPIs, getDataIsoYear, type AccData } from '../utils/dataHelpers';
 import { CAUSE_COLORS } from '../utils/theme';
 
 const formatNumber = (value: number | undefined | null): string => {
@@ -29,7 +29,7 @@ const GapTooltip = ({ active, payload }: GapTooltipProps) => {
 
   const isBetter = data.gapPct <= 0;
   const color = isBetter ? COLOR_BETTER : COLOR_WORSE;
-  const currentYear = new Date().getFullYear();
+  const currentYear = data.currentYear ?? new Date().getFullYear();
   const previousYear = currentYear - 1;
 
   return (
@@ -65,7 +65,7 @@ interface View1Props {
 }
 
 const View1 = ({ data, isActive }: View1Props) => {
-  const currentYear = new Date().getFullYear();
+  const currentYear = getDataIsoYear(data);
   const previousYear = currentYear - 1;
 
   const {
@@ -98,10 +98,11 @@ const View1 = ({ data, isActive }: View1Props) => {
           delayN: dN,
           delayN1: dN1,
           gapPct,
+          currentYear,
         };
       })
       .filter(d => d.week <= lastWeekWithData);
-  }, [weeks, flights, flightsPrev, delaysPerFlight, delaysPerFlightPrev, lastWeekWithData]);
+  }, [weeks, flights, flightsPrev, delaysPerFlight, delaysPerFlightPrev, lastWeekWithData, currentYear]);
 
   // Bornes Y symétriques autour de 0
   const maxAbs = Math.max(

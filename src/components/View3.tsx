@@ -2,10 +2,10 @@ import React, { useEffect, useState, useMemo } from 'react';
 import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { getAnnualSeries, getLastCompleteWeek, type AccData } from '../utils/dataHelpers';
+import { getAnnualSeries, getLastCompleteWeek, getDataIsoYear, type AccData } from '../utils/dataHelpers';
 import { CAUSE_COLORS } from '../utils/theme';
 import { CausesOnlyLegend } from './ChartLegends';
-import PeriodToggle from './PeriodToggle';
+import PeriodToggle, { type PeriodOption } from './PeriodToggle';
 
 const formatNumber = (value: number | undefined | null): string => {
   if (value === undefined || value === null) return '';
@@ -22,9 +22,10 @@ interface CustomChartTooltipProps {
   active?: boolean;
   payload?: any[];
   label?: string;
+  currentYear: number;
 }
 
-const CustomChartTooltip = ({ active, payload, label }: CustomChartTooltipProps) => {
+const CustomChartTooltip = ({ active, payload, label, currentYear }: CustomChartTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
 
   const valueMap: Record<string, number> = {};
@@ -53,7 +54,7 @@ const CustomChartTooltip = ({ active, payload, label }: CustomChartTooltipProps)
       }}>
         <span>Semaine {label}</span>
         <span style={{ color: 'var(--accent-amber)', textAlign: 'right' }}>
-          {new Date().getFullYear()}
+          {currentYear}
         </span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '4px 12px' }}>
@@ -85,6 +86,7 @@ interface View3Props {
 }
 
 const View3 = ({ data, isActive }: View3Props) => {
+  const currentYear = getDataIsoYear(data);
   const {
     weeks,
     flights,
@@ -93,7 +95,7 @@ const View3 = ({ data, isActive }: View3Props) => {
 
   const lastWeekWithData = getLastCompleteWeek(data);
 
-  const [period, setPeriod] = useState('12w');
+  const [period, setPeriod] = useState<PeriodOption>('12w');
 
   useEffect(() => {
     if (isActive) {
@@ -192,7 +194,7 @@ const View3 = ({ data, isActive }: View3Props) => {
       <div className="flex justify-between items-start mb-4 flex-wrap gap-3">
         <div>
           <h3 className="text-base font-semibold text-primary">
-            Analyse des Causes de Retard {new Date().getFullYear()}
+            Analyse des Causes de Retard {currentYear}
           </h3>
           <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
             {periodLabel} — échelle des vols auto-adaptée
@@ -228,8 +230,8 @@ const View3 = ({ data, isActive }: View3Props) => {
               tickFormatter={formatCompact}
               width={60}
             />
-            <Tooltip content={<CustomChartTooltip />} cursor={false} />
-            <Legend content={<CausesOnlyLegend currentYear={new Date().getFullYear()} />} />
+            <Tooltip content={<CustomChartTooltip currentYear={currentYear} />} cursor={false} />
+            <Legend content={<CausesOnlyLegend currentYear={currentYear} />} />
             <Bar yAxisId="left" dataKey="Capacity/Staffing" stackId="a" fill={CAUSE_COLORS.capacity} />
             <Bar yAxisId="left" dataKey="Weather" stackId="a" fill={CAUSE_COLORS.weather} />
             <Bar yAxisId="left" dataKey="Other" stackId="a" fill={CAUSE_COLORS.other} />

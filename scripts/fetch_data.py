@@ -47,12 +47,9 @@ def parse_traffic(excel_bytes: io.BytesIO) -> pd.DataFrame:
     df["Day"] = pd.to_datetime(df[date_col]).dt.normalize()
     df["DayOfWeek"] = df["Day"].dt.dayofweek
 
-    if "Week" in df.columns:
-        df["Week"] = pd.to_numeric(df["Week"], errors="coerce").fillna(0).astype(int)
-    else:
-        df["Week"] = df["Day"].dt.isocalendar().week.astype(int)
-
-    df["Year"] = df["Day"].dt.year
+    iso = df["Day"].dt.isocalendar()
+    df["Week"] = iso.week.astype(int)
+    df["Year"] = iso.year.astype(int)
     ent_col = "Entity" if "Entity" in df.columns else df.columns[0]
     df["Entity"] = df[ent_col].astype(str).str.strip().str.upper()
     fl_col = "Flights" if "Flights" in df.columns else df.columns[4]

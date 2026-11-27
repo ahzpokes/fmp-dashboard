@@ -1,9 +1,9 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
   ComposedChart, Line
 } from 'recharts';
-import { getLastCompleteWeek, type AccData } from '../utils/dataHelpers';
+import { getLastCompleteWeek, getDataIsoYear, type AccData } from '../utils/dataHelpers';
 import { FRENCH_ACC } from '../utils/theme';
 
 // Palette stable pour identifier chaque CRNA (partagée entre les 2 graphiques)
@@ -38,7 +38,8 @@ interface ColoredCrnaTickProps {
   payload?: { value: string };
 }
 
-const ColoredCrnaTick = ({ x, y, payload }: ColoredCrnaTickProps) => {
+const ColoredCrnaTick = ({ x = 0, y = 0, payload }: ColoredCrnaTickProps) => {
+  if (!payload) return null;
   const color = CRNA_COLORS[payload.value] || 'var(--text-muted)';
   return (
     <text
@@ -59,14 +60,14 @@ interface DelayBarTooltipProps {
   active?: boolean;
   payload?: any[];
   label?: string;
+  currentYear: number;
 }
 
-const DelayBarTooltip = ({ active, payload, label }: DelayBarTooltipProps) => {
+const DelayBarTooltip = ({ active, payload, label, currentYear }: DelayBarTooltipProps) => {
   if (!active || !payload || !payload.length) return null;
-  const currentYear = new Date().getFullYear();
   const previousYear = currentYear - 1;
 
-  const valueMap = {};
+  const valueMap: Record<string, number> = {};
   payload.forEach(entry => { valueMap[entry.dataKey] = entry.value; });
 
   const valN = valueMap[`delayAvg_${currentYear}`] ?? 0;
@@ -85,7 +86,7 @@ const DelayBarTooltip = ({ active, payload, label }: DelayBarTooltipProps) => {
       <div style={{
         fontWeight: 'bold', borderBottom: '1px solid var(--border-color)',
         paddingBottom: 4, marginBottom: 6,
-        color: CRNA_COLORS[label] || 'var(--text-primary)',
+        color: (label && CRNA_COLORS[label]) || 'var(--text-primary)',
       }}>
         {label}
       </div>
@@ -140,16 +141,33 @@ const FlightsTooltip = ({ active, payload, label }: FlightsTooltipProps) => {
   );
 };
 
+interface CrnaStat {
+  acc: string;
+  name: string;
+  color: string;
+  totalDelayN: number;
+  totalDelayN1: number;
+  cumulVolsN: number;
+  cumulVolsN1: number;
+  delayAvgN: number;
+  delayAvgN1: number;
+  gapDelayAvgPct: number;
+  evolVolsPct: number;
+  flightsArr: number[];
+  flightsPrevArr: number[];
+}
+
 interface View5Props {
   data: Record<string, AccData>;
   isActive?: boolean;
 }
 
 const View5 = ({ data, isActive }: View5Props) => {
-  const currentYear = new Date().getFullYear();
+  const firstAcc = FRENCH_ACC.map(acc => data[acc]).find(Boolean);
+  const currentYear = getDataIsoYear(firstAcc);
   const previousYear = currentYear - 1;
 
-  const [highlightedAcc, setHighlightedAcc] = useState(null);
+  const [highlightedAcc, setHighlightedAcc] = useState<string | null>(null);
 
   useEffect(() => {
     if (isActive) {
@@ -171,8 +189,8 @@ const View5 = ({ data, isActive }: View5Props) => {
   }, [data]);
 
   // ─── Stats par CRNA (délai moyen + vols) ───
-  const crnaStats = useMemo(() => {
-    return FRENCH_ACC.map(acc => {
+  const crnaStats = useMemo<CrnaStat[]>(() => {
+    return FRENCH_ACC.map((acc): CrnaStat | null => {
       const accData = data[acc];
       if (!accData?.annual) return null;
       const annual = accData.annual;
@@ -222,7 +240,7 @@ const View5 = ({ data, isActive }: View5Props) => {
         flightsArr,
         flightsPrevArr,
       };
-    }).filter(Boolean);
+    }).filter((stat): stat is CrnaStat => stat !== null);
   }, [data, lastWeekWithData]);
 
   // ─── Données graphique délai moyen ───
@@ -236,9 +254,10 @@ const View5 = ({ data, isActive }: View5Props) => {
 
   const delayYMax = useMemo(() => {
     const max = Math.max(
+      0,
       ...delayChartData.map(d => Math.max(
-        d[`delayAvg_${currentYear}`] || 0,
-        d[`delayAvg_${previousYear}`] || 0
+        Number(d[`delayAvg_${currentYear}`]) || 0,
+        Number(d[`delayAvg_${previousYear}`]) || 0
       ))
     );
     return Math.ceil(max * 1.15 * 10) / 10 || 1;
@@ -246,9 +265,9 @@ const View5 = ({ data, isActive }: View5Props) => {
 
   // ─── Données graphique vols ───
   const flightsChartData = useMemo(() => {
-    const points = [];
+    const points: Array<Record<string, number>> = [];
     for (let w = 1; w <= lastWeekWithData; w++) {
-      const point = { week: w };
+      const point: Record<string, number> = { week: w };
       crnaStats.forEach(stat => {
         point[stat.name] = Math.round(stat.flightsArr[w - 1] || 0);
       });
@@ -331,7 +350,7 @@ const View5 = ({ data, isActive }: View5Props) => {
                   style: { textAnchor: 'middle' },
                 }}
               />
-              <Tooltip content={<DelayBarTooltip />} cursor={{ fill: 'var(--bg-hover)' }} />
+              <Tooltip content={<DelayBarTooltip currentYear={currentYear} />} cursor={{ fill: 'var(--bg-hover)' }} />
               <Legend
                 content={() => (
                   <div className="flex justify-center gap-4 text-xs py-2"
@@ -406,8 +425,10 @@ const View5 = ({ data, isActive }: View5Props) => {
               <Tooltip content={<FlightsTooltip />} />
               <Legend
                 onClick={(e) => {
-                  const name = e.dataKey;
-                  setHighlightedAcc(prev => prev === name ? null : name);
+                  const name = typeof e.dataKey === 'string' ? e.dataKey : null;
+                  if (name) {
+                    setHighlightedAcc(prev => (prev === name ? null : name));
+                  }
                 }}
                 wrapperStyle={{ cursor: 'pointer', paddingTop: 8 }}
               />
